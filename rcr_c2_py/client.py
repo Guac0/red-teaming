@@ -17,4 +17,4 @@ def execute_cmd(cmd):
 def post_response(response):
     requests.post("http://127.0.0.1:12345/output", data={"data":response})
 
-execute_cmd(get_cmd())
+post_response(execute_cmd(get_cmd()))
