@@ -3,7 +3,7 @@
 <<COMMENT
 This file handles the shadow filesystem functionally of the immutable suite.
 Backs up the specified directories to our shadow filesystem location.
-Adds the cron job to execute the 
+Adds the cron job to execute the status checker.
 COMMENT
 
 # Redirect all output to both terminal and log file
@@ -28,6 +28,7 @@ fi
 # Make the backup directory
 mkdir -p "$hid_dir"
 
+# Backup the given directories
 for key in "${!dirs[@]}"; do
     dir="${dirs[$key]}"
     if [ -d "$dir" ]; then
@@ -38,3 +39,6 @@ for key in "${!dirs[@]}"; do
         rsync -a --info=progress2 $dir $hid_dir/$dir
     fi
 done
+
+# Add the cronjob to root. every 5 min.
+echo "*/5 * * * * $(pwd)/checker.sh" | sudo crontab -
