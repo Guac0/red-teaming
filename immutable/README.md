@@ -1,3 +1,5 @@
+Status: Deprecated, replaced by StabVest.
+
 # Immutable
 Working title.
 
