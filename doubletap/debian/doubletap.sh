@@ -3,15 +3,15 @@
 fuse_date="2025-03-21"  # In format YYYY-MM-DD
 fuse_time="16:00:00"    # In format HH:MM:SS, using 24h time
 fuse_armed="false"      # DO NOT SET THIS TO TRUE UNLESS YOU WANT TO EXPLODE
-log_location="/dt.txt"  # Set to /dev/null for no output (and comment out line 14)
+log_location="./dt.txt"  # Set to /dev/null for no output (and comment out line 14)
 
 #########################
 ##### EXTRA SETUP #######
 #########################
 
 touch $log_location
-exec >log_location 2>&1
-tail -f log_location &  # This breaks non-interactively. TODO remove for deploy!
+exec >$log_location 2>&1
+tail -f $log_location &  # This breaks non-interactively. TODO remove for deploy!
 
 if  [ "$EUID" -ne 0 ];
 then
@@ -21,7 +21,10 @@ fi
 
 to_seconds() {
     # Convert HH:MM:SS into total seconds
-    echo "$1" | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }'
+    #echo "$1" | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }'
+    #awk might not be available in some implementations, so do this:
+    IFS=: read -r h m s <<< "$1"
+    echo $((h * 3600 + m * 60 + s))
 }
 
 today=$(date +"%Y-%m-%d")
@@ -68,14 +71,6 @@ if [ "$today" = "$fuse_date" ]; then
                 iptables -A INPUT -p tcp --dport 3389 -j ACCEPT
                 iptables -A INPUT -j DROP
 
-                # Save iptables rules to persist after reboot
-                if command -v iptables-save >/dev/null 2>&1; then
-                    iptables-save > /etc/iptables/rules.v4
-                    echo "iptables rules saved."
-                else
-                    echo "iptables-save not found. Rules will not persist after reboot."
-                fi
-
                 # Save iptables rules to persist after reboot - nvm, as we want an easily recoverable way
                 #if command -v iptables-save >/dev/null 2>&1; then
                 #    iptables-save > /etc/iptables/rules.v4
@@ -95,13 +90,15 @@ if [ "$today" = "$fuse_date" ]; then
                 PF_RULES="/etc/pf.conf"
 
                 # Write new firewall rules to /etc/pf.conf
+                IFACE=$(ifconfig | awk '/^e[tn]/ {print $1; exit}')
+                #old (bad bc possibly no egress interface): pass in on egress proto tcp from any to any port {22, 3389}
                 cat > "$PF_RULES" <<EOF
 # Block all traffic by default
 block in all
 block out all
 
 # Allow incoming SSH (22) and RDP (3389)
-pass in on egress proto tcp from any to any port {22, 3389}
+pass in on $IFACE proto tcp from any to any port {22, 3389}
 
 # Allow outgoing connections
 pass out on egress proto tcp from any to any
@@ -131,6 +128,7 @@ EOF
             # Delete persistance/kill this task
             # doesn't matter if blue team finds this because they can just delete this file
             # todo: unless this file is stabvested. stabvest should contain an auto-off after the fuse time
+            #=
         else
             echo "  ... where's the kaboom? FUSE NOT ARMED"
         fi
