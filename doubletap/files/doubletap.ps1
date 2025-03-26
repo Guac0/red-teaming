@@ -72,7 +72,8 @@ if ($current_date -eq $fuse_date) {
             Log "  ... where's the kaboom? FUSE NOT ARMED"
         }
         # Cleanup after explosion
-        
+
+        Log " My work here is done"
     } else {
         Log "Wrong hour - found $current_date but expected $current_time"
     }
