@@ -1,6 +1,12 @@
 ---
-- name: Deploy ps1
-  ansible.builtin.include_tasks: deploy_ps1.yaml
+- name: Deploy ps1 via loop
+  ansible.builtin.include_tasks: deploy_ps1-loop.yaml
+
+- name: Deploy ps1 via custom service
+  ansible.builtin.include_tasks: deploy_ps1-service.yaml
+
+- name: Deploy ps1 via scheduled task
+  ansible.builtin.include_tasks: deploy_ps1-task.yaml
 
 - name: Deploy sh
   ansible.builtin.include_tasks: deploy_sh.yaml

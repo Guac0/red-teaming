@@ -23,8 +23,10 @@ function Log($message) {
     if ($log_location) { $entry | Out-File -Append -FilePath $log_location }
 }
 
+# Start
+
 Log "---------------------------------------------"
-Log "  Timebomb - $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")"
+Log "  Doubletap - $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")"
 
 #########################
 ###### TIME CHECK #######
@@ -80,3 +82,5 @@ if ($current_date -eq $fuse_date) {
 } else {
     Log "Wrong date - found $current_date but expected $fuse_date"
 }
+
+# End

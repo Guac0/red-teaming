@@ -33,7 +33,7 @@ fuse_seconds=$(to_seconds "$fuse_time")
 current_seconds=$(to_seconds "$current_time")
 
 echo "---------------------------------------------"
-echo "  Timebomb - $today $current_time"
+echo "  Doubletap - $today $current_time"
 
 #########################
 ###### TIME CHECK #######
