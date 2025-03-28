@@ -13,8 +13,10 @@ if ($log_location) {
 }
 
 function Log($message) {
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $entry = "[$timestamp] $message"
+    #$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    #$entry = "[$timestamp] $message"
+    #timestamp is basically useless, ignore it
+    $entry = "$message"
     # Write output to console and, if a log file location is set, append the log entry to the file
     if ($log_location) { 
         $entry | Out-File -Append -FilePath $log_location 

@@ -27,6 +27,8 @@ to_seconds() {
     echo $((h * 3600 + m * 60 + s))
 }
 
+# Start of loop
+
 today=$(date +"%Y-%m-%d")
 current_time=$(date +"%H:%M:%S")
 fuse_seconds=$(to_seconds "$fuse_time")
@@ -128,7 +130,8 @@ EOF
             # Delete persistance/kill this task
             # doesn't matter if blue team finds this because they can just delete this file
             # todo: unless this file is stabvested. stabvest should contain an auto-off after the fuse time
-            #=
+            # Cleanup after explosion
+
         else
             echo "  ... where's the kaboom? FUSE NOT ARMED"
         fi
@@ -138,3 +141,4 @@ EOF
 else
     echo "Wrong date - found $today but expected $fuse_date"
 fi
+# End of loop
