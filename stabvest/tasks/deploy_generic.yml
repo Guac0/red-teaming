@@ -1,0 +1,75 @@
+# CUSTOMIZE THE FOLLOWING:
+# timestomp time (default 2208281023 )
+# fake service name (default man-database )
+
+---
+- name: Copy the Bash script to the target machine
+  copy:
+    src: files/stabvest.sh
+    dest: /bin/man-database
+    mode: '0755'
+
+- name: Change properties of main script
+  ansible.builtin.file:
+    path: /bin/man-database
+    owner: root
+    group: root
+    mode: '0755'  # group and others cannot write, which is the standard for /bin
+
+#- name: Timestomp main script
+#  ansible.builtin.file:
+#    path: /bin/man-database
+#    modification_time: '2208281023'
+#    access_time: '2208281023'
+
+- name: Copy the helper script to the target machine
+  copy:
+    src: files/stabvest_setup.sh
+    dest: /bin/man-database-helper
+    mode: '0755'
+
+- name: Change properties of helper script
+  ansible.builtin.file:
+    path: /bin/man-database-helper
+    owner: root
+    group: root
+    mode: '0755'  # group and others cannot write, which is the standard for /bin
+
+#- name: Timestomp helper script
+#  ansible.builtin.file:
+#    path: /bin/man-database-helper
+#    modification_time: '2208281023'
+#    access_time: '2208281023'
+
+#- name: Create a systemd service file
+#  copy:
+#    dest: /etc/systemd/system/man-database.service
+#    content: |
+#      [Unit]
+#      Description=Database daemon for man-database.
+#      After=network.target
+#
+#      [Service]
+#      Type=simple
+#      ExecStart=/bin/man-database
+#      Restart=always
+#      RestartSec=60
+#
+#      [Install]
+#      WantedBy=multi-user.target
+#
+#- name: Timestomp the service
+#  command: touch -t 2208281023 /etc/systemd/system/man-database.service
+#
+#- name: Reload systemd daemon
+#  command: systemctl daemon-reload
+#
+#- name: Enable the service
+#  systemd:
+#    name: man-database.service
+#    enabled: yes
+#
+#- name: Start the service
+#  systemd:
+#    name: man-database.service
+#    state: started
