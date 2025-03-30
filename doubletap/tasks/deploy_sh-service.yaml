@@ -54,8 +54,7 @@
   command: touch -r /bin/bash /etc/systemd/system/{{ service_name }}.service
 
 - name: Timestomp script to match /bin/bash creation time
-  shell: |
-    touch -r /bin/bash {{ script_path }}
+  command: touch -r /bin/bash {{ script_path }}
 
 # TODO check that this should go after timestomp
 - name: Set immutable attribute on script
