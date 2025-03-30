@@ -5,6 +5,10 @@
     service_name: "man-database"
     restart_time: 60 # run every 60 seconds
     # See third task for additional config!!!!!
+#todo:
+#backupdir="/usr/share/fonts/stab-mono/$servicename"
+#timestomp_start_year=2018
+#timestomp_end_year=2023
 
 - name: Copy the Bash script to the target machine
   copy:
