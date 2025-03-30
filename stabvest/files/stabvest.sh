@@ -6,6 +6,10 @@ Author: Guac0 / Andrew Niebur
 Shoot me a message if you yoink stuff from this, I like seeing my stuff used :D
 '
 
+# Ansible Inserts Config Info Below This Line
+
+# End Ansible Config
+
 # Only uncomment one service/flavor at a time.
 ############### Nginx ###############
 #declare -a ports=( 80 443 ) # UNCOMMENT THIS REGARDLESS OF WHAT OS YOU USE. use numbers only, no named alias like "http"

@@ -8,7 +8,9 @@
   copy:
     src: "files/doubletap.sh"
     dest: "{{ script_path }}"
-    mode: "0755"
+    owner: root
+    group: root
+    mode: '0755'
 
 - name: Modify script to add while loop
   lineinfile:
