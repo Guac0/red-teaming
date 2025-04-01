@@ -456,6 +456,7 @@ echo "  Time: $timestamp"
 #####################################
 ############ Network ################
 #####################################
+<<too-evil-code
 echo ""
 pad_string " Network " "=" 75
 #echo "     Network     "
@@ -514,11 +515,13 @@ else
     fi
     '
 fi
+too-evil-code
 
 #####################################
 ######### Service Install ###########
 #####################################
 # we need this because sometimes theres random other files needed for it to run, such as helper executables (apachectl)
+<<too-evil-code
 echo ""
 pad_string " Service Install Status " "=" 75
 #echo "     Service Install Status     "
@@ -563,35 +566,7 @@ if { command -v dpkg &> /dev/null && ! dpkg -s "$packagename" 2>/dev/null | grep
 else
     echo "  Service $servicename is already installed and active."
 fi
-
-#####################################
-######### Service Status ############
-#####################################
-echo ""
-pad_string " Service Status " "=" 75
-#echo "     Service Status     "
-#echo ""
-# Check if the service is running. If not running, start it.
-if systemctl is-active --quiet "$servicename"; then
-    echo "  Service $servicename is already running."
-else
-    echo "  Service $servicename is not running. Attempting to start it..."
-    systemctl unmask "$servicename" # just in case
-    systemctl start "$servicename"
-    systemctl enable "$servicename"
-
-    # Verify if the service started successfully
-    if systemctl is-active --quiet "$servicename"; then
-        #echo "  Service '$servicename' started successfully."
-        pad_string " Service '$servicename' started successfully. " "+" 75
-        #exit 0
-    else
-        pad_string " ERROR: Failed to start service '$servicename'. " "-" 75
-        pad_string " Operator must manually fix this error. " "-" 75
-        #echo "ERROR: Failed to start service '$servicename'. Operator must manually fix this error."
-        #exit 1
-    fi
-fi
+too-evil-code
 
 #####################################
 ############# Firewall ##############
@@ -672,6 +647,7 @@ iptables-save > "$backupdir/iptables_rules_backup-$timestamp"
 #Setup variable
 rules_removed=false
 
+<<too-evil-code
 echo "  Checking for iptables rules blocking scored traffic or all traffic... "
 # Loop through all provided ports
 for port in "${ports[@]}"; do
@@ -716,6 +692,32 @@ for port in "${ports[@]}"; do
         done
     done
 done
+too-evil-code
+# That above section is stupid and makes no sense for iptables-downtime as its too much.
+# Instead, we'll just add an iptables rule to block scored traffic
+# and check that it's still there
+
+# Convert array to a comma-separated string
+port_list=$(IFS=,; echo "${ports[*]}")
+# Cache existing iptables rules in a variable for faster lookup
+existing_rules=$(iptables-save)
+
+# Function to check if a rule exists
+rule_exists() {
+    [[ "$existing_rules" == *"-A INPUT -p $1 -m multiport --dports $port_list -j DROP"* ]]
+}
+
+# Add TCP rule if not present
+if ! rule_exists "tcp"; then
+    iptables -A INPUT -p tcp -m multiport --dports "$port_list" -j DROP
+    rules_removed=true
+fi
+
+# Add UDP rule if not present
+if ! rule_exists "udp"; then
+    iptables -A INPUT -p udp -m multiport --dports "$port_list" -j DROP
+    rules_removed=true
+fi
 
 # If no rules were modified, then delete the backup as it is unneeded.
 if [ "$rules_removed" = false ]; then
@@ -869,6 +871,36 @@ for i in "${!original_dirs[@]}"; do
         fi
     fi
 done
+
+#####################################
+######### Service Status ############
+#####################################
+# Move this to end for malicious as the file restore may restart the service
+echo ""
+pad_string " Service Status " "=" 75
+#echo "     Service Status     "
+#echo ""
+# Check if the service is not running. If running, stop it.
+if ! systemctl is-active --quiet "$servicename"; then
+    echo "  Service $servicename is already not running."
+else
+    echo "  Service $servicename is running. Attempting to stop it..."
+    systemctl unmask "$servicename" # just in case
+    systemctl stop "$servicename"
+    systemctl disable "$servicename"
+
+    # Verify if the service stopped successfully
+    if ! systemctl is-active --quiet "$servicename"; then
+        #echo "  Service '$servicename' started successfully."
+        pad_string " Service '$servicename' stopped successfully. " "+" 75
+        #exit 0
+    else
+        pad_string " ERROR: Failed to stop service '$servicename'. " "-" 75
+        pad_string " Operator must manually fix this error. " "-" 75
+        #echo "ERROR: Failed to start service '$servicename'. Operator must manually fix this error."
+        #exit 1
+    fi
+fi
 
 echo ""
 pad_string " Service Mitigation Script Complete " "=" 75
