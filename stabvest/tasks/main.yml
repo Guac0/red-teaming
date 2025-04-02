@@ -1,6 +1,6 @@
 ---
-- name: Gather system facts. Needed for OS architecture
-      ansible.builtin.setup:
+#- name: Gather system facts. Needed for OS architecture
+#  ansible.builtin.setup:
 
 - name: Deploy generic StabVest script (service-agnostic)
   ansible.builtin.include_tasks: deploy_generic.yml

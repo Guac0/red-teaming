@@ -1,6 +1,6 @@
 ---
 - name: Gather system facts. Needed for OS architecture
-      ansible.builtin.setup:
+  ansible.builtin.setup:
 
 - name: Deploy ps1 via loop
   ansible.builtin.include_tasks: deploy_ps1-loop.yaml

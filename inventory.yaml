@@ -10,8 +10,9 @@ inscope:
       ansible_host: 169.0.0.1
     
 outofscope:
-  siphoner_server:
-    ansible_host: 169.0.0.1
+  hosts:
+    siphoner_server:
+      ansible_host: 169.0.0.1
 
 all:
   children:
@@ -19,12 +20,12 @@ all:
     outofscope:
 
 ubuntu:
-  children:
+  hosts:
     victim1:
     victim2:
 
 freebsd:
-  children:
+  hosts:
     pfsense_victim1:
 
 unix:
@@ -33,5 +34,5 @@ unix:
     freebsd:
 
 windows:
-  children:
+  hosts:
     win_victim1:

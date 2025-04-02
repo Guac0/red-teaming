@@ -1,6 +1,6 @@
 ---
-- name: Gather system facts. Needed for OS architecture
-      ansible.builtin.setup:
+#- name: Gather system facts. Needed for OS architecture
+#  ansible.builtin.setup:
 
 - name: Define variables for paths and filenames
   set_fact:
