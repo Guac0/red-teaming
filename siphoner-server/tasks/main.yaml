@@ -4,5 +4,5 @@
 - name: Deploy mongodb
   ansible.builtin.include_tasks: mongodb.yaml
 
-- name: Deploy graylog
-  ansible.builtin.include_tasks: graylog.yaml
+#- name: Deploy graylog
+#  ansible.builtin.include_tasks: graylog.yaml

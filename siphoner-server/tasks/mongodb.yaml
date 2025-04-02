@@ -1,7 +1,7 @@
 ---
 #https://github.com/trfore/ansible-role-mongodb-install
 - name: Install Mongodb on Siphoner Server
-  become: true
+  #become: true
   ansible.builtin.include_role:
     name: trfore.mongodb_install
   vars:
