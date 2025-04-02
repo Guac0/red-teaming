@@ -1,3 +1,5 @@
 # Note: file has same name as ALL group in inventory, so these vars will be used for all
-ansible_user: buyer
-ansible_password: DefaultPass1#
+#ansible_user: buyer
+#ansible_password: DefaultPass1#
+ansible_user: ccdc
+ansible_password: ccdc

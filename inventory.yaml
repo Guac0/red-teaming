@@ -13,8 +13,8 @@ outofscope:
   hosts:
     siphoner_server:
       ansible_host: 10.0.10.117
-      ansible_user: ccdc
-      ansible_user: password
+      #ansible_user: ccdc
+      #ansible_user: password
 
 all:
   children:
