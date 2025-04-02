@@ -1,0 +1,46 @@
+- name: Ping
+  hosts: all
+  tasks:
+    - name: Ping my hosts
+      ansible.builtin.ping:
+
+    - name: Print message
+      ansible.builtin.debug:
+        msg: Hello world
+  tags: 
+    - all
+    - ping
+
+- name: Deploy Doubletap - Unix
+  hosts: unix
+  roles:
+    - doubletap
+  tags: 
+    - all
+    - doubletap
+    - doubletap-unix
+
+- name: Deploy Doubletap - Windows
+  hosts: windows
+  roles:
+    - doubletap
+  tags: 
+    - all
+    - doubletap
+    - doubletap-windows
+
+- name: Deploy Siphoner Clients - Ubuntu
+  hosts: ubuntu
+  roles:
+    - siphoner
+  tags: 
+    - all
+    - siphoner-client-ubuntu
+
+- name: Deploy Stabvest
+  hosts: ubuntu
+  roles:
+    - stabvest
+  tags:
+    - all
+    - stabvest

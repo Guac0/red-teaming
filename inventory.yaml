@@ -1,0 +1,28 @@
+all:
+  hosts:
+    victim1:
+      ansible_host: 10.0.10.109
+    victim2:
+      ansible_host: 10.0.10.120
+    win_victim1:
+      ansible_host: 169.0.0.1
+    pfsense_victim1:
+      ansible_host: 169.0.0.1
+
+ubuntu:
+  children:
+    victim1:
+    victim2:
+
+freebsd:
+  children:
+    pfsense_victim1:
+
+unix:
+  children:
+    ubuntu:
+    freebsd:
+
+windows:
+  children:
+    win_victim1:

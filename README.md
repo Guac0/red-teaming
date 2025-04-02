@@ -9,3 +9,9 @@ ideas
 * nyancat https://github.com/klange/nyancat
 * doubletap (aka alarm-clock)
 * write down breaks
+
+Setup
+apt update
+apt install -y python3 python3-pip
+pip3 install ansible argcomplete
+activate-global-python-argcomplete
