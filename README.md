@@ -12,7 +12,7 @@ ideas
 
 Setup
 apt update
-apt install -y python3 python3-pip sshpass
+apt install -y python3 python3-pip sshpass pwgen
 pip3 install ansible argcomplete
 activate-global-python-argcomplete
 
