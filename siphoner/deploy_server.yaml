@@ -1,0 +1,27 @@
+# Deploy server using Graylog Ansible Role
+# https://github.com/Graylog2/graylog-ansible-role 
+# https://galaxy.ansible.com/ui/standalone/roles/Graylog2/graylog/documentation/
+# https://computingforgeeks.com/deploy-graylog-server-using-ansible-on-ubuntu-debian-centos/
+
+# Install role:
+# ansible-galaxy install graylog2.graylog
+# Install dependencies:
+# ansible-galaxy install -r <GRAYLOG ROLE_DIRECTORY>/requirements.yml
+# Then run this playbook.
+
+# Default example playbook is fine for our needs
+  # Graylog vars
+  graylog_version: 6.1
+  graylog_install_java: True
+  graylog_password_secret: "" # Insert your own here. Generate with: pwgen -s 96 1
+  graylog_root_password_sha2: "" # Insert your own root_password_sha2 here. Generate with:   echo -n "Enter Password: " && head -1 </dev/stdin | tr -d '\n' | sha256sum | cut -d" " -f1
+  graylog_http_bind_address: "{{ ansible_default_ipv4.address }}:9000"
+  graylog_http_publish_uri: "http://{{ ansible_default_ipv4.address }}:9000/"
+  graylog_http_external_uri: "http://{{ ansible_default_ipv4.address }}:9000/"
+  graylog_install_open_package: True
+  graylog_install_enterprise_package: False
+
+roles:
+  - role: "graylog2.graylog"
+    tags:
+      - "graylog"

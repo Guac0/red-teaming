@@ -14,3 +14,4 @@ TODO:
 * Testing
 * Obfuscation
 * Windows variant?
+* Use syslog or something instead of one log file - watch out for race conditions

