@@ -15,3 +15,6 @@ apt update
 apt install -y python3 python3-pip
 pip3 install ansible argcomplete
 activate-global-python-argcomplete
+
+ansible -c to check - https://docs.ansible.com/ansible/latest/community/other_tools_and_programs.html#validate-playbook-tools
+ansible-lint verify-apache.yml
