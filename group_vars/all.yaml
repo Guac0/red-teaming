@@ -3,3 +3,7 @@
 #ansible_password: DefaultPass1#
 ansible_user: ccdc
 ansible_password: ccdc
+
+ansible_become: yes 
+ansible_become_method: sudo
+ansible_become_pass: ccdc
