@@ -1,0 +1,5 @@
+---
+- name: Install Java 8
+  ansible.builtin.package:
+    name: openjdk-8-jdk
+    state: present

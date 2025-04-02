@@ -1,0 +1,4 @@
+---
+roles:
+  - trfore.mongodb_install
+  - graylog2.graylog

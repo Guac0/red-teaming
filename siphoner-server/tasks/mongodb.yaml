@@ -1,0 +1,11 @@
+---
+#https://github.com/trfore/ansible-role-mongodb-install
+- name: Install Mongodb on Siphoner Server
+  become: true
+  ansible.builtin.include_role:
+    name: trfore.mongodb_install
+  vars:
+    mongodb_pkg_install: true #default true to install from apt
+    #mongodb_version: "8.0.6" #default to latest v7
+    #mongodb_tar_src: mongodb-linux-x86_64-debian12-7.0.18.tgz
+    #mongodb_tar_src_remote: false
