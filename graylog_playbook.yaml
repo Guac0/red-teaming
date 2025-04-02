@@ -9,19 +9,20 @@
 # ansible-galaxy install -r ~/.ansible/roles/graylog2.graylog/requirements.yml
 # Then run this playbook.
 
-# Default example playbook is fine for our needs
-  # Graylog vars
-  graylog_version: 6.1
-  graylog_install_java: True
-  graylog_password_secret: "tKpLEv25yhbKaNXi1yw8jhq7xoAn2CZDYr02vtWvBY1bmj2PqMkbSTT8ADEQpFisMUcWu8kQpctC2kRuK66Rqrnc0UYpe2iV" # Insert your own here. Generate with: pwgen -s 96 1
-  graylog_root_password_sha2: "bdc68a40521a2d24ec51b94f8359bc41e39325ea17e7df2f55d46e43bec887f2" # Insert your own root_password_sha2 here. Generate with:   echo -n "Enter Password: " && head -1 </dev/stdin | tr -d '\n' | sha256sum | cut -d" " -f1
-  graylog_http_bind_address: "{{ ansible_default_ipv4.address }}:9000"
-  graylog_http_publish_uri: "http://{{ ansible_default_ipv4.address }}:9000/"
-  graylog_http_external_uri: "http://{{ ansible_default_ipv4.address }}:9000/"
-  graylog_install_open_package: True
-  graylog_install_enterprise_package: False
-
-roles:
-  - role: "graylog2.graylog"
-    tags:
-      - "graylog"
+- name: Install Graylog
+  hosts: siphoner_server
+  become: yes
+  vars:
+    graylog_version: 6.1
+    graylog_install_java: True
+    graylog_password_secret: "tKpLEv25yhbKaNXi1yw8jhq7xoAn2CZDYr02vtWvBY1bmj2PqMkbSTT8ADEQpFisMUcWu8kQpctC2kRuK66Rqrnc0UYpe2iV" # Insert your own here. Generate with: pwgen -s 96 1
+    graylog_root_password_sha2: "bdc68a40521a2d24ec51b94f8359bc41e39325ea17e7df2f55d46e43bec887f2" # Insert your own root_password_sha2 here. Generate with:   echo -n "Enter Password: " && head -1 </dev/stdin | tr -d '\n' | sha256sum | cut -d" " -f1
+    graylog_http_bind_address: "{{ ansible_default_ipv4.address }}:9000"
+    graylog_http_publish_uri: "http://{{ ansible_default_ipv4.address }}:9000/"
+    graylog_http_external_uri: "http://{{ ansible_default_ipv4.address }}:9000/"
+    graylog_install_open_package: True
+    graylog_install_enterprise_package: False
+  roles:
+    - graylog2.graylog
+  tags:
+    - "graylog"
