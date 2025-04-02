@@ -32,10 +32,19 @@
 - name: Deploy Siphoner Clients - Ubuntu
   hosts: ubuntu
   roles:
-    - siphoner
+    - siphoner-client
   tags: 
     - all
     - siphoner-client-ubuntu
+    - siphoner-client
+
+- name: Deploy Siphoner Server
+  hosts: ubuntu
+  roles:
+    - siphoner-server
+  tags: 
+    - all
+    - siphoner-server
 
 - name: Deploy Stabvest
   hosts: ubuntu

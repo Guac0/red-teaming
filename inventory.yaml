@@ -1,4 +1,4 @@
-all:
+inscope:
   hosts:
     victim1:
       ansible_host: 10.0.10.109
@@ -8,6 +8,15 @@ all:
       ansible_host: 169.0.0.1
     pfsense_victim1:
       ansible_host: 169.0.0.1
+    
+outofscope:
+  siphoner_server:
+    ansible_host: 169.0.0.1
+
+all:
+  children:
+    inscope:
+    outofscope:
 
 ubuntu:
   children:
