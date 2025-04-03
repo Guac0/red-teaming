@@ -10,7 +10,7 @@ log_location="./dt.txt" # Set to /dev/null for no output (and comment out line 1
 #########################
 
 touch $log_location
-exec >$log_location 2>&1
+exec >>$log_location 2>&1 #append
 #tail -f $log_location &  # This breaks non-interactively. TODO remove for deploy!
 
 if [ "$(id -u)" -ne 0 ]; then # sh compatible

