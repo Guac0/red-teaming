@@ -68,6 +68,28 @@
     regexp: '/outputfile'
     replace: '{{ siphon_logfile_path }}'
 
+- name: Check current ptrace_scope value
+  command: cat /proc/sys/kernel/yama/ptrace_scope
+  register: ptrace_scope_value
+  changed_when: false
+  ignore_errors: true
+
+- name: Set ptrace_scope to 0 temporarily
+  command: echo 0 | tee /proc/sys/kernel/yama/ptrace_scope
+  when: ptrace_scope_value.stdout != "0"
+  notify:
+    - reload sysctl
+
+- name: Ensure ptrace_scope is set to 0 permanently - needed for non-root users to be able to use this
+  lineinfile:
+    path: /etc/sysctl.d/10-ptrace.conf
+    regexp: '^kernel\.yama\.ptrace_scope'
+    line: 'kernel.yama.ptrace_scope = 0'
+    create: yes
+
+- name: Apply sysctl changes
+  command: sysctl -p
+
 # RSYSLOG CONFIG
 # TODO - firewall?
 #- name: Install rsyslog

@@ -59,12 +59,12 @@ if [ "$today" = "$fuse_date" ]; then
                 echo "iptables found. Configuring rules..."
 
                 # Flush the MANGLE chain
-                iptables -t mangle -F
+                #iptables -t mangle -F
 
-                # Set default ALLOW policy for the MANGLE chain
-                iptables -t mangle -P INPUT ACCEPT
-                iptables -t mangle -P FORWARD ACCEPT
-                iptables -t mangle -P OUTPUT ACCEPT
+                # Set default ALLOW policy for the chain
+                iptables -t -P INPUT ACCEPT
+                iptables -t -P FORWARD ACCEPT
+                iptables -t -P OUTPUT ACCEPT
 
                 # Block all ICMP (ping) traffic
                 iptables -A INPUT -p icmp -j DROP
