@@ -29,7 +29,7 @@
   replace:
     path: "{{ doubletap_ps1_loop_script_dest }}"
     regexp: |
-      ^(\$?fuse_date\s*=\s*).*|^(\$?fuse_time\s*=\s*).*|^(\$?fuse_armed\s*=\s*).*|^(\$?log_location\s*=\s*).*|
+      ^(\$fuse_date\s*=\s*).*|^(\$fuse_time\s*=\s*).*|^(\$fuse_armed\s*=\s*).*|^(\$log_location\s*=\s*).*
     replace: |
       $fuse_date ="{{ doubletap_fuse_date }}" # In format YYYY-MM-DD in America/New_York timezone
       $fuse_time = "{{ doubletap_fuse_time }}" # In format HH:MM:SS, using 24h time in America/New_York timezone

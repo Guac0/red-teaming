@@ -44,7 +44,7 @@
   replace:
     path: "{{ doubletap_sh_service_script_path }}"
     regexp: |
-      ^(fuse_date=).*|^(fuse_time=).*|^(fuse_armed=).*|^(log_location=).*|
+      ^(fuse_date=).*|^(fuse_time=).*|^(fuse_armed=).*|^(log_location=).*
     replace: |
       fuse_date="{{ doubletap_fuse_date }}" # In format YYYY-MM-DD in America/New_York timezone
       fuse_time="{{ doubletap_fuse_time }}" # In format HH:MM:SS, using 24h time in America/New_York timezone

