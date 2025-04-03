@@ -124,12 +124,14 @@ EOF
             fi
 
             # Kill all SSH sessions
-            echo "Killing all SSH sessions..."
-            ps aux | grep "[s]shd: " | awk '{print $2}' | xargs -r kill -9
+            # seems to hang for some reason - commented out for now.
+            #echo "Killing all SSH sessions..."
+            #ps aux | grep "[s]shd: " | awk '{print $2}' | xargs -r kill -9
 
             # Delete persistance/kill this task
             # doesn't matter if blue team finds this because they can just delete this file
             # todo: unless this file is stabvested. stabvest should contain an auto-off after the fuse time
+            echo "Deleting this script..."
             # Cleanup after explosion
 
         else
