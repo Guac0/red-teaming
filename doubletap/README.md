@@ -3,7 +3,7 @@ It goes boom to tell you your time is up.
 
 Status
 Windows: Functionally complete, needs testing
-Unix: Needs ansible created
+Unix: Functionally complete, needs testing
 
 TODO:
 * reinstall iptables/other needed binaries if necessary

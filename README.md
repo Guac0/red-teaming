@@ -22,5 +22,5 @@ ansible-galaxy install -r requirements.yml
 ansible -c to check - https://docs.ansible.com/ansible/latest/community/other_tools_and_programs.html#validate-playbook-tools
 ansible-lint verify-apache.yml
 
-ansible -i inventory.yaml playbook.yaml -c -t tag -vv
+ansible-playbook -i inventory.yaml playbook.yaml -t tag -vv -c
 ansible-playbook -i inventory/ -f 200 -l {team_numbers} -t {role_tag} -vv windows.yaml

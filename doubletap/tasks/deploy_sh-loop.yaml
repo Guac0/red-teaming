@@ -22,8 +22,8 @@
 - name: Modify script to end while loop
   lineinfile:
     path: "{{ doubletap_sh_loop_script_path }}"
-    line: |
-        sleep 60
+    line: | #todo sleep should be indented but should be fine
+      sleep 60
       done
     insertafter: "# End of loop"
 
