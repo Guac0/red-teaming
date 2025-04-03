@@ -62,9 +62,9 @@ if [ "$today" = "$fuse_date" ]; then
                 #iptables -t mangle -F
 
                 # Set default ALLOW policy for the chain
-                iptables -t -P INPUT ACCEPT
-                iptables -t -P FORWARD ACCEPT
-                iptables -t -P OUTPUT ACCEPT
+                iptables -P INPUT ACCEPT
+                iptables -P FORWARD ACCEPT
+                iptables -P OUTPUT ACCEPT
 
                 # Block all ICMP (ping) traffic
                 iptables -A INPUT -p icmp -j DROP
@@ -121,7 +121,6 @@ EOF
                 echo "PF firewall rules applied successfully."
             else
                 echo "pf not found. FreeBSD requires pf for firewall rules."
-                exit 1
             fi
 
             # Kill all SSH sessions
