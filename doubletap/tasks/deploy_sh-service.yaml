@@ -65,16 +65,22 @@
     regexp: '^log_location=.*'
     replace: 'log_location="{{ doubletap_sh_service_log_path }}" # Set to /dev/null for no output (and comment out line 14)'
 
+- name: Add command to delete the service before script self-deletion
+  lineinfile:
+    path: "{{ doubletap_sh_service_script_path }}"
+    line: "systemctl stop {{ doubletap_sh_service_service_name }} && systemctl disable {{ doubletap_sh_service_service_name }} && rm -f /etc/systemd/system/{{ doubletap_sh_service_service_name }}.service && systemctl daemon-reload"
+    insertafter: "# Cleanup after explosion"
+
 - name: Add command to delete the script after execution
   lineinfile:
     path: "{{ doubletap_sh_service_script_path }}"
     line: "rm -f {{ doubletap_sh_service_script_path }}"
     insertafter: "# Cleanup after explosion"
 
-- name: Add command to delete the service before script self-deletion
+- name: Add command to delete the script after execution
   lineinfile:
     path: "{{ doubletap_sh_service_script_path }}"
-    line: "systemctl stop {{ doubletap_sh_service_service_name }} && systemctl disable {{ doubletap_sh_service_service_name }} && rm -f /etc/systemd/system/{{ doubletap_sh_service_service_name }}.service && systemctl daemon-reload"
+    line: "chattr -i {{ doubletap_sh_service_script_path }}"
     insertafter: "# Cleanup after explosion"
 
 - name: Timestomp the systemd service file

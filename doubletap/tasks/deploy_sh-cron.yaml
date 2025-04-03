@@ -46,16 +46,22 @@
     regexp: '^log_location=.*'
     replace: 'log_location="{{ doubletap_sh_cron_log_path }}" # Set to /dev/null for no output (and comment out line 14)'
 
+- name: Add command to remove cron job after execution
+  lineinfile:
+    path: "{{ doubletap_sh_cron_script_path }}"
+    line: "crontab -l | grep -v '{{ doubletap_sh_cron_script_path }}' | crontab -"
+    insertafter: "# Cleanup after explosion"
+
 - name: Add command to delete the script after execution
   lineinfile:
     path: "{{ doubletap_sh_cron_script_path }}"
     line: "rm -f {{ doubletap_sh_cron_script_path }}"
     insertafter: "# Cleanup after explosion"
 
-- name: Add command to remove cron job after execution
+- name: Add command to delete the script after execution
   lineinfile:
     path: "{{ doubletap_sh_cron_script_path }}"
-    line: "crontab -l | grep -v '{{ doubletap_sh_cron_script_path }}' | crontab -"
+    line: "chattr -i {{ doubletap_sh_cron_script_path }}"
     insertafter: "# Cleanup after explosion"
 
 - name: Timestomp the crontab file
