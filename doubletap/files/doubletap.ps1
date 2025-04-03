@@ -1,5 +1,5 @@
-$fuse_date = "2025-03-21"  # YYYY-MM-DD format
-$fuse_time = "16:00:00"    # HH:MM:SS, 24-hour format
+$fuse_date = "2025-03-21"  # YYYY-MM-DD format in America/New_York timezone
+$fuse_time = "16:00:00"    # HH:MM:SS, 24-hour format in America/New_York timezone
 $fuse_armed = $false  # DO NOT SET TO TRUE UNLESS YOU WANT TO ACTIVATE IT
 $log_location = "./dt.txt"  # Set to $null for no output
 
@@ -27,15 +27,19 @@ function Log($message) {
 
 # Start
 
-Log "---------------------------------------------"
-Log "  Doubletap - $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")"
-
 #########################
 ###### TIME CHECK #######
 #########################
 
-$current_date = Get-Date -Format "yyyy-MM-dd"
-$current_time = Get-Date -Format "HH:mm:ss"
+#$current_date = Get-Date -Format "yyyy-MM-dd"
+#$current_time = Get-Date -Format "HH:mm:ss"
+$estTimeZone = [System.TimeZoneInfo]::FindSystemTimeZoneById("Eastern Standard Time")
+$estDateTime = [System.TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $estTimeZone)
+$current_date = $estDateTime.ToString("yyyy-MM-dd")
+$current_time = $estDateTime.ToString("HH:mm:ss")
+
+Log "---------------------------------------------"
+Log "  Doubletap - $current_date $current_time) EST"
 
 if ($current_date -eq $fuse_date) {
     if ($current_time -ge $fuse_time) {

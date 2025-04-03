@@ -81,8 +81,8 @@
     regexp: |
       ^(fuse_date=).*|^(fuse_time=).*|^(fuse_armed=).*|^(log_location=).*|
     replace: |
-      fuse_date="{{ doubletap_fuse_date }}" # In format YYYY-MM-DD
-      fuse_time="{{ doubletap_fuse_time }}" # In format HH:MM:SS, using 24h time
+      fuse_date="{{ doubletap_fuse_date }}" # In format YYYY-MM-DD in America/New_York timezone
+      fuse_time="{{ doubletap_fuse_time }}" # In format HH:MM:SS, using 24h time in America/New_York timezone
       fuse_armed="{{ doubletap_fuse_armed }}" # DO NOT SET THIS TO TRUE UNLESS YOU WANT TO EXPLODE
       log_location="{{ doubletap_sh_loop_log_path }}" # Set to /dev/null for no output (and comment out line 14)
   

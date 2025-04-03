@@ -1,7 +1,7 @@
 #!/bin/sh
 
-fuse_date="2025-03-21"  # In format YYYY-MM-DD
-fuse_time="16:00:00"    # In format HH:MM:SS, using 24h time
+fuse_date="2025-03-21"  # In format YYYY-MM-DD in America/New_York timezone
+fuse_time="16:00:00"    # In format HH:MM:SS, using 24h time in America/New_York timezone
 fuse_armed="false"      # DO NOT SET THIS TO TRUE UNLESS YOU WANT TO EXPLODE
 log_location="./dt.txt" # Set to /dev/null for no output (and comment out line 14)
 
@@ -29,8 +29,8 @@ to_seconds() {
 
 # Start of loop
 
-today=$(date +"%Y-%m-%d")
-current_time=$(date +"%H:%M:%S")
+today=$(TZ=America/New_York date +"%Y-%m-%d")
+current_time=$(TZ=America/New_York date +"%H:%M:%S")
 fuse_seconds=$(to_seconds "$fuse_time")
 current_seconds=$(to_seconds "$current_time")
 
