@@ -44,7 +44,7 @@ echo "  Doubletap - $today $current_time"
 
 # Check if the date is March 21st, 2025, and the time is after 3 PM
 if [ "$today" = "$fuse_date" ]; then
-    if [ "$fuse_seconds" -ge "$current_seconds" ]; then
+    if [ "$current_seconds" -ge "$fuse_seconds" ]; then
         echo "+++++++++++++++++++++++++++++++++++"
         echo "  DETONATION CRITERIA MET"
         echo "Found date $today and expected $fuse_date"
@@ -137,7 +137,7 @@ EOF
             echo "  ... where's the kaboom? FUSE NOT ARMED"
         fi
     else
-        echo "Wrong hour - found $today but expected $current_time"
+        echo "Wrong time - found $current_time but expected $fuse_time or greater"
     fi
 else
     echo "Wrong date - found $today but expected $fuse_date"
