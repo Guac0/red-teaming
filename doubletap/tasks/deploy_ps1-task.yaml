@@ -25,6 +25,17 @@
   args:
     executable: powershell.exe
 
+- name: Update settings in the script file
+  replace:
+    path: "{{ doubletap_ps1_loop_script_dest }}"
+    regexp: |
+      ^(\$?fuse_date\s*=\s*).*|^(\$?fuse_time\s*=\s*).*|^(\$?fuse_armed\s*=\s*).*|^(\$?log_location\s*=\s*).*|
+    replace: |
+      $fuse_date ="{{ doubletap_fuse_date }}" # In format YYYY-MM-DD
+      $fuse_time = "{{ doubletap_fuse_time }}" # In format HH:MM:SS, using 24h time
+      $fuse_armed = ${{ doubletap_fuse_armed }} # DO NOT SET THIS TO TRUE UNLESS YOU WANT TO EXPLODE
+      $log_location = "{{ doubletap_ps1_task_log_path }}" # Set to /dev/null for no output (and comment out line 14)
+
 - name: Modify PowerShell script to self-delete task after execution
   win_lineinfile:
     path: "{{ doubletap_ps1_task_script_dest }}"

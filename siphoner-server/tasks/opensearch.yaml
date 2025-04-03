@@ -89,6 +89,7 @@
   debug:
     var: opensearch_status.stdout
 
+# Should be half of the total RAM available. We assume 8 gigs of ram available
 - name: Update JVM heap size in jvm.options
   replace:
     path: /etc/opensearch/jvm.options

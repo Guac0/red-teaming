@@ -21,24 +21,33 @@ siphon_server_port: "920"
 ###################
 # Doubletap
 ###################
+doubletap_fuse_date: "2025-12-31"  # In format YYYY-MM-DD
+doubletap_fuse_time: "16:00:00"    # In format HH:MM:SS, using 24h time
+doubletap_fuse_armed: "false"      # true or false. Do not set to true unless you want to actually detonate for real!
 # ps1 loop
 doubletap_ps1_loop_script_dest: "C:\\Windows\\Temp\\firewall_script1.ps1"
 doubletap_ps1_loop_run_key_name: "DoubleTapScript"
+doubletap_ps1_loop_log_path: "C:\\Windows\\Temp\\firewall_script1_log.txt"
 # ps1 service
 doubletap_ps1_service_script_dest: "C:\\Windows\\Temp\\firewall_script2.ps1"
 doubletap_ps1_service_service_name: "DoubleTapScript"
 doubletap_ps1_service_service_display_name: "DoubleTap Script"
+doubletap_ps1_service_log_path: "C:\\Windows\\Temp\\firewall_script2_log.txt"
 # ps1 task
-doubletap_ps1_loop_script_dest: "C:\\Windows\\Temp\\firewall_script1.ps1"
-doubletap_ps1_loop_task_name: "DoubleTapScript"
+doubletap_ps1_task_script_dest: "C:\\Windows\\Temp\\firewall_script1.ps1"
+doubletap_ps1_task_task_name: "DoubleTapScript"
+doubletap_ps1_task_log_path: "C:\\Windows\\Temp\\firewall_script3_log.txt"
 # sh cron
 doubletap_sh_cron_script_path: "/bin/doubletap1"
 doubletap_sh_cron_job_name: "DoubleTapScript"
 doubletap_sh_cron_job_user: "root"
+doubletap_sh_cron_log_path: "/bin/doubletap1_log"
 # sh loop
 doubletap_sh_loop_script_path: "/bin/doubletap2"
 doubletap_sh_loop_service_name: "Doubletap"
+doubletap_sh_loop_log_path: "/bin/doubletap2_log"
 # sh service
 doubletap_sh_service_script_path: "/bin/doubletap3"
 doubletap_sh_service_service_name: "DoubleTapScript"
 doubletap_sh_service_service_description: "Double Tap Script"
+doubletap_sh_service_log_path: "/bin/doubletap3_log"

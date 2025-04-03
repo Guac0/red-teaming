@@ -3,7 +3,7 @@
 fuse_date="2025-03-21"  # In format YYYY-MM-DD
 fuse_time="16:00:00"    # In format HH:MM:SS, using 24h time
 fuse_armed="false"      # DO NOT SET THIS TO TRUE UNLESS YOU WANT TO EXPLODE
-log_location="./dt.txt"  # Set to /dev/null for no output (and comment out line 14)
+log_location="./dt.txt" # Set to /dev/null for no output (and comment out line 14)
 
 #########################
 ##### EXTRA SETUP #######
@@ -11,7 +11,7 @@ log_location="./dt.txt"  # Set to /dev/null for no output (and comment out line 
 
 touch $log_location
 exec >$log_location 2>&1
-tail -f $log_location &  # This breaks non-interactively. TODO remove for deploy!
+#tail -f $log_location &  # This breaks non-interactively. TODO remove for deploy!
 
 if  [ "$EUID" -ne 0 ];
 then
