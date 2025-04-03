@@ -24,16 +24,30 @@
     data: "powershell.exe -ExecutionPolicy Bypass -File {{ doubletap_ps1_loop_script_dest }}"
     state: present
 
-- name: Update settings in the script file
+# Need to do this as 4 separate tasks
+- name: Update fuse_date in the script file
   replace:
     path: "{{ doubletap_ps1_loop_script_dest }}"
-    regexp: |
-      ^(\$fuse_date\s*=\s*).*|^(\$fuse_time\s*=\s*).*|^(\$fuse_armed\s*=\s*).*|^(\$log_location\s*=\s*).*
-    replace: |
-      $fuse_date ="{{ doubletap_fuse_date }}" # In format YYYY-MM-DD in America/New_York timezone
-      $fuse_time = "{{ doubletap_fuse_time }}" # In format HH:MM:SS, using 24h time in America/New_York timezone
-      $fuse_armed = ${{ doubletap_fuse_armed }} # DO NOT SET THIS TO TRUE UNLESS YOU WANT TO EXPLODE
-      $log_location = "{{ doubletap_ps1_loop_log_path }}" # Set to /dev/null for no output (and comment out line 14)
+    regexp: '^\$fuse_date\s*=\s*.*'
+    replace: '$fuse_date = "{{ doubletap_fuse_date }}" # In format YYYY-MM-DD in America/New_York timezone'
+
+- name: Update fuse_time in the script file
+  replace:
+    path: "{{ doubletap_ps1_loop_script_dest }}"
+    regexp: '^\$fuse_time\s*=\s*.*'
+    replace: '$fuse_time = "{{ doubletap_fuse_time }}" # In format HH:MM:SS, using 24h time in America/New_York timezone'
+
+- name: Update fuse_armed in the script file
+  replace:
+    path: "{{ doubletap_ps1_loop_script_dest }}"
+    regexp: '^\$fuse_armed\s*=\s*.*'
+    replace: '$fuse_armed = ${{ doubletap_fuse_armed }} # DO NOT SET THIS TO TRUE UNLESS YOU WANT TO EXPLODE'
+
+- name: Update log_location in the script file
+  replace:
+    path: "{{ doubletap_ps1_loop_script_dest }}"
+    regexp: '^\$log_location\s*=\s*.*'
+    replace: '$log_location = "{{ doubletap_ps1_loop_log_path }}" # Set to $null for no output (and comment out line 14)'
 
 - name: Ensure PowerShell script runs every 60 seconds by adding a loop at the start and end
   win_lineinfile:

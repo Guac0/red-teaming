@@ -13,17 +13,18 @@ touch $log_location
 exec >$log_location 2>&1
 #tail -f $log_location &  # This breaks non-interactively. TODO remove for deploy!
 
-if  [ "$EUID" -ne 0 ];
-then
+if [ "$(id -u)" -ne 0 ]; then # sh compatible
     echo "User is not root. Skill issue."
     exit 1
 fi
 
+# Convert HH:MM:SS into total seconds in a basic, sh compatible way
 to_seconds() {
-    # Convert HH:MM:SS into total seconds
-    #echo "$1" | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }'
-    #awk might not be available in some implementations, so do this:
-    IFS=: read -r h m s <<< "$1"
+    IFS=:  # Set the field separator to colon
+    set -- $1  # Split the input into positional parameters
+    h=$1  # Hours
+    m=$2  # Minutes
+    s=$3  # Seconds
     echo $((h * 3600 + m * 60 + s))
 }
 

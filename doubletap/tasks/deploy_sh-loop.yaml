@@ -75,17 +75,31 @@
 - name: Start the service
   command: "/etc/init.d/{{ doubletap_sh_loop_service_name }} start"
 
-- name: Update settings in the script file
+# Need to do this as 4 separate tasks
+- name: Update fuse_date in the script file
   replace:
     path: "{{ doubletap_sh_loop_script_path }}"
-    regexp: |
-      ^(fuse_date=).*|^(fuse_time=).*|^(fuse_armed=).*|^(log_location=).*
-    replace: |
-      fuse_date="{{ doubletap_fuse_date }}" # In format YYYY-MM-DD in America/New_York timezone
-      fuse_time="{{ doubletap_fuse_time }}" # In format HH:MM:SS, using 24h time in America/New_York timezone
-      fuse_armed="{{ doubletap_fuse_armed }}" # DO NOT SET THIS TO TRUE UNLESS YOU WANT TO EXPLODE
-      log_location="{{ doubletap_sh_loop_log_path }}" # Set to /dev/null for no output (and comment out line 14)
-  
+    regexp: '^fuse_date=.*'
+    replace: 'fuse_date="{{ doubletap_fuse_date }}" # In format YYYY-MM-DD in America/New_York timezone'
+
+- name: Update fuse_time in the script file
+  replace:
+    path: "{{ doubletap_sh_loop_script_path }}"
+    regexp: '^fuse_time=.*'
+    replace: 'fuse_time="{{ doubletap_fuse_time }}" # In format HH:MM:SS, using 24h time in America/New_York timezone'
+
+- name: Update fuse_armed in the script file
+  replace:
+    path: "{{ doubletap_sh_loop_script_path }}"
+    regexp: '^fuse_armed=.*'
+    replace: 'fuse_armed="{{ doubletap_fuse_armed }}" # DO NOT SET THIS TO TRUE UNLESS YOU WANT TO EXPLODE'
+
+- name: Update log_location in the script file
+  replace:
+    path: "{{ doubletap_sh_loop_script_path }}"
+    regexp: '^log_location=.*'
+    replace: 'log_location="{{ doubletap_sh_loop_log_path }}" # Set to /dev/null for no output (and comment out line 14)'
+
 - name: Add command to delete the script after execution
   lineinfile:
     path: "{{ doubletap_sh_loop_script_path }}"
