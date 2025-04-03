@@ -1,8 +1,9 @@
-#- name: Deploy opensearch # must be installed manually, see readme.md
-#  ansible.builtin.include_tasks: opensearch.yaml
-
+---
 - name: Deploy mongodb
   ansible.builtin.include_tasks: mongodb.yaml
 
-#- name: Deploy graylog
-#  ansible.builtin.include_tasks: graylog.yaml
+- name: Deploy opensearch
+  ansible.builtin.include_tasks: opensearch.yaml
+
+- name: Deploy graylog
+  ansible.builtin.include_tasks: graylog.yaml
