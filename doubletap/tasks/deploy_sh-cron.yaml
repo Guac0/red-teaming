@@ -13,14 +13,6 @@
     group: root
     mode: '0755'
 
-- name: Create cron job for root user to execute script every minute
-  cron:
-    name: "{{ doubletap_sh_cron_job_name }}"
-    user: "{{ doubletap_sh_cron_job_user }}"
-    job: "{{ doubletap_sh_cron_script_path }}"
-    minute: "*"
-    state: present
-
 # Need to do this as 4 separate tasks
 - name: Update fuse_date in the script file
   replace:
@@ -63,6 +55,14 @@
     path: "{{ doubletap_sh_cron_script_path }}"
     line: "chattr -i {{ doubletap_sh_cron_script_path }}"
     insertafter: "# Cleanup after explosion"
+
+- name: Create cron job for root user to execute script every minute
+  cron:
+    name: "{{ doubletap_sh_cron_job_name }}"
+    user: "{{ doubletap_sh_cron_job_user }}"
+    job: "{{ doubletap_sh_cron_script_path }}"
+    minute: "*"
+    state: present
 
 - name: Timestomp the crontab file
   command: touch -r /bin/bash /var/spool/cron/crontabs/{{ doubletap_sh_cron_job_user }}
