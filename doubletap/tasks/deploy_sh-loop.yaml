@@ -45,7 +45,7 @@
       case "$1" in
         start)
           echo "Starting {{ doubletap_sh_loop_service_name }}"
-          nohup {{ doubletap_sh_loop_script_path }} &> /dev/null &
+          nohup {{ doubletap_sh_loop_script_path }} &
           ;;
         stop)
           echo "Stopping {{ doubletap_sh_loop_service_name }}"
@@ -99,6 +99,12 @@
     path: "{{ doubletap_sh_loop_script_path }}"
     regexp: '^log_location=.*'
     replace: 'log_location="{{ doubletap_sh_loop_log_path }}" # Set to /dev/null for no output (and comment out line 14)'
+
+- name: Add script removal from startup task to the script
+  lineinfile:
+    path: "{{ doubletap_sh_loop_script_path }}"
+    line: "exit 0"
+    insertafter: "# Cleanup after explosion"
 
 - name: Add script removal from startup task to the script
   lineinfile:
