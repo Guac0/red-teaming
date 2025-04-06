@@ -9,6 +9,12 @@ ansible_become_method: sudo
 ansible_become_pass: ccdc
 
 ###################
+# Secure
+###################
+secure_ansible_dir: "/ansible/red-teaming"
+secure_redteam_pwd: "" # Doesn't really matter as pwd auth is disabled but still change it after downloading
+secure_key_location: "/opt/inventory/id_ed25519.pub"
+###################
 # Siphon
 ###################
 siphon_file_old_path: "/bin/bash"

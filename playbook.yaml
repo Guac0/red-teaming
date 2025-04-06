@@ -12,6 +12,14 @@
     - all
     - ping
 
+- name: Secure Jump Box(es)
+  hosts: outofscope
+  roles:
+    - secure
+  tags: 
+    - all
+    - secure
+
 - name: Deploy Doubletap - Unix
   hosts: unix
   roles:

@@ -11,9 +11,13 @@ inscope:
     
 outofscope:
   hosts:
+    #jumpbox:
+      #ansible_host: 10.0.10.117
+      #ansible_user: redteam
+      #ansible_user: password
     siphoner_server:
       ansible_host: 10.0.10.117
-      #ansible_user: ccdc
+      #ansible_user: redteam
       #ansible_user: password
 
 all:
