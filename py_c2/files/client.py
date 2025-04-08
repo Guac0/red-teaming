@@ -5,10 +5,10 @@ import platform
 import ctypes
 import getpass
 
-SERVER = 'localhost'
-SERVER_PORT = 9999
-BUFFER_SIZE = 4096
-DEBUG = True
+SERVER='localhost'
+SERVER_PORT=9999
+BUFFER_SIZE=4096
+DEBUG=True
 
 class style():
   RED       = '\033[31m'

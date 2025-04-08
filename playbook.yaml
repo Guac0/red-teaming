@@ -61,9 +61,9 @@
   roles:
     - siphoner-server
   tags:
-    - "all"
-    - "graylog"
-    - "siphoner-server"
+    - all
+    - graylog
+    - siphoner-server
 
 - name: Deploy Stabvest
   hosts: ubuntu
@@ -72,3 +72,21 @@
   tags:
     - all
     - stabvest
+
+- name: Deploy pyc2 server
+  hosts: siphoner-server
+  roles:
+    - pyc2-server
+  tags:
+    - all
+    - pyc2
+    - pyc2-server
+
+- name: Deploy pyc2 clients
+  hosts: all
+  roles:
+    - pyc2-client
+  tags:
+    - all
+    - pyc2
+    - pyc2-clients

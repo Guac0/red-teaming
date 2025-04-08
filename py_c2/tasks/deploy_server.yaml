@@ -1,1 +1,37 @@
 ---
+- name: Allow incoming traffic on port 99 via iptables
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ pyc2_port }}"
+    jump: ACCEPT
+    state: present
+
+- name: Copy the Python script to the remote machine
+  ansible.builtin.copy:
+    src: "files/sshd_config"
+    dest: "{{ pyc2_server_location }}"
+    mode: '0755'
+
+# Update server vars
+- name: Update user password in the script file
+  replace:
+    path: "{{ pyc2_server_location }}"
+    regexp: '^\LISTEN_PORT=.*'
+    replace: 'LISTEN_PORT="{{ pyc2_port }}"'
+
+- name: Ensure tmux is installed
+  ansible.builtin.package:
+    name: tmux
+    state: present
+
+- name: Start tmux session to run the Python script
+  ansible.builtin.shell: |
+    tmux new-session -d -s pyc2 'python3 {{ pyc2_server_location }}'
+  args:
+    creates: /tmp/tmux_pyc2_started
+
+#- name: Create a marker file to prevent re-running tmux command
+#  ansible.builtin.file:
+#    path: /tmp/tmux_pyc2_started
+#    state: touch

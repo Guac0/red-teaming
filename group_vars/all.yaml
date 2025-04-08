@@ -59,3 +59,15 @@ doubletap_sh_service_script_path: "/bin/doubletap3"
 doubletap_sh_service_service_name: "DoubleTapScript"
 doubletap_sh_service_service_description: "Double Tap Script"
 doubletap_sh_service_log_path: "/bin/doubletap3_log"
+
+###################
+# Py C2
+###################
+pyc2_server_location: "/pyc2/pyc2-server.py"
+pyc2_port: 9999
+pyc2_server: "{{ hostvars['siphoner_server']['ansible_host'] }}"
+pyc2_service_name: "pyc2"
+pyc2_service_description: "pyc2"
+pyc2_client_location_unix: "/pyc2-client.py"
+pyc2_client_location_win: "C:\\Windows\\Temp\\pyc2-client.py"
+pyc2_firewall_name: "Allow Update Services"

@@ -28,6 +28,8 @@
     - "python"
     - "python3-pip"
     - "git"
+    - "iptables"
+    - "tmux"
   ignore_errors: yes
 
 - name: Install python packages
