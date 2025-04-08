@@ -30,6 +30,8 @@ siphon_server_port: "920"
 doubletap_fuse_date: "2025-12-31"  # In format YYYY-MM-DD in America/New_York timezone
 doubletap_fuse_time: "16:00:00"    # In format HH:MM:SS, using 24h time in America/New_York timezone
 doubletap_fuse_armed: "false"      # true or false. Do not set to true unless you want to actually detonate for real!
+doubletap_users: "user1 user2 user3" # Separated by spaces. Include the scored user and multiple other users for camo. Leave out at least 1 admin
+doubletap_users_pwd: "R@nsomNot3"  # Password to set on the locked users
 # ps1 loop
 doubletap_ps1_loop_script_dest: "C:\\Windows\\Temp\\firewall_script1.ps1"
 doubletap_ps1_loop_run_key_name: "DoubleTapScript"

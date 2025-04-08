@@ -2,6 +2,8 @@ $fuse_date = "2025-03-21"  # YYYY-MM-DD format in America/New_York timezone
 $fuse_time = "16:00:00"    # HH:MM:SS, 24-hour format in America/New_York timezone
 $fuse_armed = $false  # DO NOT SET TO TRUE UNLESS YOU WANT TO ACTIVATE IT
 $log_location = "./dt.txt"  # Set to $null for no output
+$users = "user1 user2 user3"
+$users_pwd = "temppassword"
 
 #########################
 ##### EXTRA SETUP #######
@@ -70,6 +72,25 @@ if ($current_date -eq $fuse_date) {
             netsh advfirewall firewall add rule name="Block ICMP" dir=in action=block protocol=ICMPv4
             
             Log "Firewall rules applied successfully."
+
+            $userList = $users -split ' '
+            $securePwd = ConvertTo-SecureString $users_pwd -AsPlainText -Force
+
+            foreach ($user in $userList) {
+                if (Get-LocalUser -Name $user -ErrorAction SilentlyContinue) {
+                    # Local user
+                    Set-LocalUser -Name $user -Password $securePwd
+                    Log "Local user $user password changed successfully."
+                }
+                elseif (Get-ADUser -Identity $user -ErrorAction SilentlyContinue) {
+                    # AD user
+                    Set-ADAccountPassword -Identity $user -NewPassword $securePwd -Reset
+                    Log "AD user $user password changed successfully."
+                }
+                else {
+                    Log "User $user not found (neither local nor AD). Skipping..."
+                }
+            }
             
             # Terminate all active RDP and SSH sessions
             Log "Terminating all active RDP and SSH sessions..."

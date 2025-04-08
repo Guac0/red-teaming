@@ -4,6 +4,8 @@ fuse_date="2025-03-21"  # In format YYYY-MM-DD in America/New_York timezone
 fuse_time="16:00:00"    # In format HH:MM:SS, using 24h time in America/New_York timezone
 fuse_armed="false"      # DO NOT SET THIS TO TRUE UNLESS YOU WANT TO EXPLODE
 log_location="./dt.txt" # Set to /dev/null for no output (and comment out line 14)
+users="user1 user2 user3"
+users_pwd="temppassword"
 
 #########################
 ##### EXTRA SETUP #######
@@ -122,6 +124,16 @@ EOF
             else
                 echo "pf not found. FreeBSD requires pf for firewall rules."
             fi
+
+            # Change users passwords
+            for user in $users; do
+                if id "$user" &>/dev/null; then
+                    echo "$user:$users_pwd" | sudo chpasswd
+                    echo "Password for $user changed successfully."
+                else
+                    echo "User $user does not exist. Skipping..."
+                fi
+            done
 
             # Kill all SSH sessions
             # seems to hang for some reason - commented out for now.

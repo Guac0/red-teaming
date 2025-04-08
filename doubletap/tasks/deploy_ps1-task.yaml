@@ -25,7 +25,19 @@
   args:
     executable: powershell.exe
 
-# Need to do this as 4 separate tasks
+# Need to do this as separate tasks
+- name: Update users list in the script file
+  replace:
+    path: "{{ doubletap_ps1_task_script_dest }}"
+    regexp: '^\$users\s*=\s*.*'
+    replace: '$users = "{{ doubletap_users }}"'
+
+- name: Update user password in the script file
+  replace:
+    path: "{{ doubletap_ps1_task_script_dest }}"
+    regexp: '^\$users_pwd\s*=\s*.*'
+    replace: '$users_pwd = "{{ doubletap_users_pwd }}"'
+
 - name: Update fuse_date in the script file
   replace:
     path: "{{ doubletap_ps1_task_script_dest }}"
