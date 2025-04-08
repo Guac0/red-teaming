@@ -6,14 +6,6 @@
 - name: Backup Rules
   ansible.builtin.shell: "iptables-save >> /etc/iptables_rules.v4.pre_lite"
 
-- name: Accept policies
-  iptables:
-    chain: "{{ item }}"
-    policy: ACCEPT
-  with_items:
-    - "INPUT"
-    - "OUTPUT"
-
 - name: Flush rules
   iptables:
     flush: yes
@@ -93,13 +85,14 @@
     out_interface: lo
     jump: ACCEPT
 
-- name: Block everything else
-  iptables:
-    chain: "{{ item.chain }}"
-    policy: DROP
-  with_items:
-    - { chain: INPUT }
-    - { chain: OUTPUT }
+# Don't do this as it makes it awkward
+#- name: Block everything else
+#  iptables:
+#    chain: "{{ item.chain }}"
+#    policy: DROP
+#  with_items:
+#    - { chain: INPUT }
+#    - { chain: OUTPUT }
 
 - name: Save Rules
   ansible.builtin.shell: "iptables-save >> /etc/iptables_rules.v4"
