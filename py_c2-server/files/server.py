@@ -120,14 +120,13 @@ def command_menu():
                 try:
                     client["cs"].send(b"KILL")
                     client["cs"].close()
-                except:
-                    pass
+                except Exception as e:
+                    print(f"{style.RED}Error when trying to send kill message to {client_ip}: {str(e)}. Client killed. {style.RESET}")
                 finally:
-                    #clients_dead_info[client_ip] = clients_info.pop(client_ip)
                     client["alive"] = False
                     client["cs"] = None
             except KeyError:
-                print(f"Client {client_ipaddr} not found.")
+                print(f"{style.RED}Client {client_ipaddr} not found.{style.RESET}")
 
     elif response == "4": # Command by IP
         client_ipaddr = input("Client IP to command: ").strip()
@@ -137,10 +136,15 @@ def command_menu():
                 client = clients_info[client_ipaddr]
                 client["cs"].send(f"CMD {client_cmd}".encode())
             except KeyError:
-                print(f"Client {client_ipaddr} not found.")
+                print(f"{style.RED}Client {client_ipaddr} not found.{style.RESET}")
+            except Exception as e:
+                print(f"{style.RED}Error when trying to send command to {client_ip}: {str(e)}. Client killed. {style.RESET}")
+                client["alive"] = False
+                client["cs"] = None
+                # close socket?
 
     elif response == "5": # Exit
-        confirm = input("Are you sure you want to exit? This will kill the server. Type y/n: ").strip()
+        confirm = input(f"{style.RED}Are you sure you want to exit? This will kill the server. Type y/n: {style.RESET}").strip()
         if confirm == "y":
             exit()
 
@@ -149,15 +153,16 @@ def ping_all(noisy=False):
     threads = []
 
     with clients_lock:
-        clients_snapshot = list(clients_info)  # make a copy to safely iterate. TODO this is so wrong
+        #clients_snapshot = dict(clients_info) # make a copy to safely iterate. TODO this is so wrong
 
-    for client in clients_snapshot:
-        thread = threading.Thread(target=ping_client, args=(client, noisy))
-        thread.start()
-        threads.append(thread)
+        for client_ip in clients_info:
+            client = clients_info[client_ip]
+            thread = threading.Thread(target=ping_client, args=(client, noisy))
+            thread.start()
+            threads.append(thread)
 
-    for thread in threads:
-        thread.join()  # Wait for all pings to finish
+        for thread in threads:
+            thread.join()  # Wait for all pings to finish
 
 def ping_client(client, noisy=False):
     cs = client["cs"]
@@ -170,10 +175,10 @@ def ping_client(client, noisy=False):
             raise ValueError("Received empty response")
         cs.settimeout(TIMEOUT_TIME)
         if noisy:
-            print(f"Client {ip} is alive")
+            print(f"{style.GREEN}Client {ip} is alive{style.RESET}")
     except Exception as e:
         if noisy:
-            print(f"Client {ip} is dead: {e}")
+            print(f"{style.RED}Client {ip} is dead: {e}{style.RESET}")
         with clients_lock:
             if client in clients_info:
                 #clients_dead_info[ip] = clients_info.pop(ip)
@@ -242,7 +247,7 @@ def handle_connections(server_sock):
                 clients_info[client_info["ipaddr"]] = client_info
             
             client_sock.send(b"REG_R")
-            thread.start()
+            #thread.start()
         else:
             print(f"Unknown startup msg from {addr}: {received_msg}. Killing client.")
             client_sock.send(b"KILL")
