@@ -81,7 +81,8 @@ def main():
                     # Give it 60 seconds to run before failing
                     command = response[len("CMD "):]
                     # dns_server_lines = subprocess.run(['grep','nameserver'], input=etc_resolve_output, stdout=subprocess.PIPE, text=True).stdout.splitlines()
-                    result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=60)
+                    #result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=60)
+                    result = subprocess.run("whoami", shell=True, capture_output=True, text=True, timeout=60)
                     # output = result.stdout + result.stderr
                     output = f"CMD_R {result.returncode} | {result.stdout} | {result.stderr}"
                     client_sock.send(output.encode())
@@ -96,14 +97,12 @@ def main():
             except subprocess.TimeoutExpired:
                 output = "CMD_R 124 | Command timed out | Command timed out"
                 client_sock.send(output.encode())
-            except (ConnectionResetError, ConnectionAbortedError):
-                close_connection(client_sock,"Client has lost connection to server.")
-                return
             except Exception as e:
                 print(f"Unexpected error: {e}")
                 close_connection(client_sock, str(e))
                 return
-
+    except (ConnectionResetError, ConnectionAbortedError):
+        close_connection(client_sock,"Client has lost connection to server.")
     except Exception as e:
         # Graceful exit before crash
         close_connection(client_sock,str(e))
