@@ -9,7 +9,7 @@
 
 - name: Copy the Python script to the remote machine
   ansible.builtin.copy:
-    src: "files/sshd_config"
+    src: "files/server.py"
     dest: "{{ pyc2_server_location }}"
     mode: '0755'
 

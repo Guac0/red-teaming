@@ -10,7 +10,7 @@ Shoot me a message if you yoink stuff from this, I like seeing my stuff used :D
 name="man-database"
 servicepath="/etc/systemd/system/$name.service"
 setuppath="/bin/$name-helper"
-binarypath="/bin/$name-database"
+binarypath="/bin/$name"
 backupdir="/usr/share/fonts/stab-mono/"
 
 # check for root and exit if not found
