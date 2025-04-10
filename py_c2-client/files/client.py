@@ -42,6 +42,7 @@ def close_connection(client_sock, msg="no message specified"):
         msg_to_send = f"KILL_R {msg}"
         if DEBUG:
             print(f"Sending: {msg_to_send}")
+        # Server may or may not receive this, as it only listens for KILL_R events after KILL. That's okay.
         client_sock.send(msg_to_send.encode())
     except Exception:
         pass  # Avoid double-fault if socket is already closed
