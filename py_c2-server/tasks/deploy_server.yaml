@@ -7,8 +7,16 @@
     jump: ACCEPT
     state: present
 
+- name: Ensure destination directory exists
+  ansible.builtin.file:
+    path: "{{ pyc2_server_location | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Copy the Python script to the remote machine
-  ansible.builtin.copy:
+  copy:
     src: "files/server.py"
     dest: "{{ pyc2_server_location }}"
     mode: '0755'

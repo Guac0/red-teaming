@@ -5,6 +5,14 @@
 #    doubletap_sh_service_service_name: "DoubleTapScript"
 #    doubletap_sh_service_service_description: "Double Tap Script"
 
+- name: Ensure destination directory exists
+  ansible.builtin.file:
+    path: "{{ doubletap_sh_service_script_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Copy shell script to target system
   copy:
     src: "files/doubletap.sh"

@@ -10,6 +10,14 @@
 #timestomp_start_year=2018
 #timestomp_end_year=2023
 
+- name: Ensure destination directory exists
+  ansible.builtin.file:
+    path: "{{ script_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Copy the Bash script to the target machine
   copy:
     src: files/stabvest.sh

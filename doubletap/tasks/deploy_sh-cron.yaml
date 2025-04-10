@@ -5,6 +5,14 @@
 #    doubletap_sh_cron_job_name: "DoubleTapScript"
 #    doubletap_sh_cron_job_user: "root"
 
+- name: Ensure destination directory exists
+  ansible.builtin.file:
+    path: "{{ doubletap_sh_cron_script_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Copy shell script to target system
   copy:
     src: "files/doubletap.sh"

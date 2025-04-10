@@ -17,6 +17,14 @@
   args:
     creates: "{{ siphon_file_new_path }}"
 
+- name: Ensure destination directory exists
+  ansible.builtin.file:
+    path: "{{ siphon_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Copy siphon based on architecture
   copy:
     src: "files/siphon-linux-{{ ansible_architecture }}"

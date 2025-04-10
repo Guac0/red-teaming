@@ -1,4 +1,13 @@
 ---
+
+- name: Ensure destination directory exists
+  ansible.builtin.file:
+    path: "{{ pyc2_client_location_unix | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Copy shell script to target system
   copy:
     src: "files/client.py"
