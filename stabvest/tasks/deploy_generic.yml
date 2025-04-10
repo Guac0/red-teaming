@@ -24,10 +24,10 @@
     insertafter: "# Ansible Inserts Config Info Below This Line"
     block: |
       declare -a ports=( 80 443 )
-      servicename="nginx"
-      packagename="nginx"
-      binarypath="/usr/sbin/nginx"
-      configdir="/etc/nginx"
+      servicename="apache2"
+      packagename="apache2"
+      binarypath="/usr/sbin/apache2"
+      configdir="/etc/apache2"
       contentdir="/var/www/html"
       miscdir1=""
       miscdir2=""

@@ -19,6 +19,9 @@ outofscope:
       ansible_host: 10.0.10.117
       #ansible_user: redteam
       #ansible_user: password
+    stabvest_test:
+      #ansible_host: 100.97.226.71
+      ansible_host: 127.0.0.1
 
 all:
   children:

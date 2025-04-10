@@ -66,7 +66,7 @@
     - siphoner-server
 
 - name: Deploy Stabvest
-  hosts: ubuntu
+  hosts: stabvest_test
   roles:
     - stabvest
   tags:
