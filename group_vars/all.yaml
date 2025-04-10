@@ -65,9 +65,12 @@ doubletap_sh_service_log_path: "/bin/doubletap3_log"
 ###################
 pyc2_server_location: "/pyc2/pyc2-server.py"
 pyc2_port: 9999
+pyc2_port_range: 200
 pyc2_server: "{{ hostvars['siphoner_server']['ansible_host'] }}"
 pyc2_service_name: "pyc2"
 pyc2_service_description: "pyc2"
 pyc2_client_location_unix: "/pyc2-client.py"
 pyc2_client_location_win: "C:\\Windows\\Temp\\pyc2-client.py"
 pyc2_firewall_name: "Allow Update Services"
+pyc2_debug: "True"
+pyc2_buffer_size: 4096

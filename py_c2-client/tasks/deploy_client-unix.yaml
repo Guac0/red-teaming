@@ -18,7 +18,31 @@
   replace:
     path: "{{ pyc2_client_location_unix }}"
     regexp: '^SERVER_PORT=.*'
-    replace: 'SERVER_PORT="{{ pyc2_port }}"'
+    replace: 'SERVER_PORT={{ pyc2_port }}'
+
+- name: Update server port range
+  replace:
+    path: "{{ pyc2_client_location_unix }}"
+    regexp: '^PORT_RADIUS=.*'
+    replace: 'PORT_RADIUS={{ pyc2_port_range }}'
+
+- name: Update firewall name
+  replace:
+    path: "{{ pyc2_client_location_unix }}"
+    regexp: '^FIREWALL_NAME=.*'
+    replace: 'FIREWALL_NAME="{{ pyc2_firewall_name }}"'
+
+- name: Update DEBUG value
+  replace:
+    path: "{{ pyc2_client_location_unix }}"
+    regexp: '^DEBUG=.*'
+    replace: 'DEBUG={{ pyc2_debug }}'
+
+- name: Update BUFFER value
+  replace:
+    path: "{{ pyc2_client_location_unix }}"
+    regexp: '^BUFFER_SIZE=.*'
+    replace: 'BUFFER_SIZE={{ pyc2_buffer_size }}'
 
 - name: Create systemd service to execute script
   copy:

