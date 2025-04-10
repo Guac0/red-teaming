@@ -8,6 +8,12 @@
     mode: '0755'
 
 # Need to do this as separate tasks
+- name: Update TIMEOUT value
+  replace:
+    path: "{{ pyc2_client_location_unix }}"
+    regexp: '^TIMEOUT_TIME=.*'
+    replace: 'TIMEOUT_TIME={{ pyc2_timeout_time }}'
+
 - name: Update server IP
   replace:
     path: "{{ pyc2_client_location_unix }}"

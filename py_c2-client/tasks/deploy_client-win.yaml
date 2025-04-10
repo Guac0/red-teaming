@@ -21,6 +21,12 @@
     dest: "{{ pyc2_client_location_win }}"
 
 # Need to do this as separate tasks
+- name: Update TIMEOUT value
+  replace:
+    path: "{{ pyc2_client_location_win }}"
+    regexp: '^TIMEOUT_TIME=.*'
+    replace: 'TIMEOUT_TIME={{ pyc2_timeout_time }}'
+
 - name: Update server IP
   replace:
     path: "{{ pyc2_client_location_win }}"

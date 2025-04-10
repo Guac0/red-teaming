@@ -14,11 +14,29 @@
     mode: '0755'
 
 # Update server vars
-- name: Update user password in the script file
+#- name: Update server IP
+#  replace:
+#    path: "{{ pyc2_server_location }}"
+#    regexp: '^HOST=.*'
+#    replace: 'HOST="{{ pyc2_server }}"'
+
+- name: Update server port
   replace:
     path: "{{ pyc2_server_location }}"
-    regexp: '^\LISTEN_PORT=.*'
-    replace: 'LISTEN_PORT="{{ pyc2_port }}"'
+    regexp: '^LISTEN_PORT=.*'
+    replace: 'LISTEN_PORT={{ pyc2_port }}'
+
+- name: Update BUFFER value
+  replace:
+    path: "{{ pyc2_server_location }}"
+    regexp: '^BUFFER_SIZE=.*'
+    replace: 'BUFFER_SIZE={{ pyc2_buffer_size }}'
+
+- name: Update TIMEOUT value
+  replace:
+    path: "{{ pyc2_server_location }}"
+    regexp: '^TIMEOUT_TIME=.*'
+    replace: 'TIMEOUT_TIME={{ pyc2_timeout_time }}'
 
 - name: Ensure tmux is installed
   ansible.builtin.package:
