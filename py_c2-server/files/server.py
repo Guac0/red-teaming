@@ -66,6 +66,7 @@ def main():
 
     for line in [f"\n\t************************************************",f"\t********************{style.GREEN} PyC2 {style.RESET}********************","\t************************************************"]:
         print(line)
+    print("\nFor entering client IPs or hostnames, you can use * as a wildcard or ? for a single character wildcard.")
 
     while True:
         command_menu()
@@ -73,32 +74,33 @@ def main():
 def get_time():
     return datetime.now().strftime("%m/%d/%Y %H:%M:%S") #19 chars
 
+# Source must call this inside a with clients_lock
 def print_pretty(show_dead=True):
     global clients_info
-    with clients_lock:
-        sorted_dict = dict(sorted(clients_info.items(), key=lambda item: ipaddress.IPv4Address(item[0])))
-        '''
-        for nested in sorted_dict.values():
-            nested["alive"] = True
-        copy_dead = copy.deepcopy(clients_info)
-        for nested in copy_dead.values():
-            nested["alive"] = False
+    #with clients_lock:
+    sorted_dict = dict(sorted(clients_info.items(), key=lambda item: ipaddress.IPv4Address(item[0])))
+    '''
+    for nested in sorted_dict.values():
+        nested["alive"] = True
+    copy_dead = copy.deepcopy(clients_info)
+    for nested in copy_dead.values():
+        nested["alive"] = False
 
-        sorted_dict.update(copy_dead)
-        sorted_dict = dict(sorted(sorted_dict.items(), key=lambda item: ipaddress.ip_address(item[0])))
-        '''
-        if len(sorted_dict) == 0:
-            print(f"{style.RED}Clients database is empty{style.RESET}")
-        else:
-            print(f"{style.BLUE}{'IP Address':<15} | {'Hostname':<25} | {'OS':<15} | {'Current User':<15} | {'Elevated':<8} | {'Last Callback':<19}{style.RESET}")
-            for client in sorted_dict.values():
-                if client["alive"]:
-                    status_color = style.GREEN
-                else:
-                    status_color = style.RED
-                    if not show_dead:
-                        continue
-                print(f"{status_color}{client['ipaddr']:<15} | {client['hostname']:<25} | {client['sys_os']:<15} | {client['cur_user']:<15} | {client['elevated']:<11} | {client['callback']:<19}{style.RESET}")
+    sorted_dict.update(copy_dead)
+    sorted_dict = dict(sorted(sorted_dict.items(), key=lambda item: ipaddress.ip_address(item[0])))
+    '''
+    if len(sorted_dict) == 0:
+        print(f"{style.RED}Clients database is empty{style.RESET}")
+    else:
+        print(f"{style.BLUE}{'IP Address':<15} | {'Hostname':<20} | {'OS':<15} | {'Current User':<15} | {'Elevated':<8} | {'Last Callback':<19}{style.RESET}")
+        for client in sorted_dict.values():
+            if client["alive"]:
+                status_color = style.GREEN
+            else:
+                status_color = style.RED
+                if not show_dead:
+                    continue
+            print(f"{status_color}{client['ipaddr']:<15} | {client['hostname']:<20} | {client['sys_os']:<15} | {client['cur_user']:<15} | {client['elevated']:<8} | {client['callback']:<19}{style.RESET}")
 
 '''
 Parses the clients dictionary and returns a list of shallow copies of matching clients
@@ -116,7 +118,7 @@ def search_clients(clients,pattern,alive_only=False):
                 matched.append(client)
     return matched
 
-# Execute this in a with clients_info:
+# Execute this in a with clients_lock:
 def send_command_clients(clients_list,command,noisy=True):
     responses = {}
     response_lock = threading.Lock()
@@ -135,11 +137,14 @@ def send_command_clients(clients_list,command,noisy=True):
     sorted_responses = dict(sorted(responses.items(), key=lambda item: ipaddress.IPv4Address(item[0])))
     for ip, response in sorted_responses.items():
         #status_code = response[len("CMD_R "):len("CMD_R ")+1]
-        response_pieces = response.split(" ")
-        if response_pieces[1] == "0" or response == "KILL_R server requested kill":
-            print(f"{style.GREEN}{ip:<15} : {response}{style.RESET}")
-        else:
-            print(f"{style.RED}{ip:<15} : {response}{style.RESET}")
+        try: # might error if split breaks
+            response_pieces = response.split(" ")
+            if response_pieces[1] == "0" or response == "KILL_R server requested kill":
+                print(f"{style.BLUE}{ip:<15} : {style.GREEN}{response}{style.RESET}")
+            else:
+                print(f"{style.BLUE}{ip:<15} : {style.RED}{response}{style.RESET}")
+        except:
+            print(f"{style.BLUE}{ip:<15} : {style.BLUE}{response}{style.RESET}")
 
 '''
 Executes a given command on a client
@@ -172,17 +177,17 @@ def command_menu():
 
     response = input(f"{style.BLUE}Please enter a number: {style.RESET}").strip()
     if response == "1": # List
-        #with clients_lock: # used inside func
         print("This list may not be up to date - run a ping to be sure!")
-        print_pretty(True)
+        with clients_lock: # used inside func
+            print_pretty(True)
 
     elif response == "2": # Ping check
         with clients_lock:
             if len(clients_info) == 0:
                 print(f"{style.RED}Clients database is empty{style.RESET}")
                 return
-        ping_all(False)
-        print_pretty(True)
+            ping_all(False)
+            print_pretty(True)
 
     elif response == "3": # Kill by IP
         with clients_lock:
@@ -246,7 +251,7 @@ def ping_all(noisy=False):
     global clients_info
     threads = []
 
-    print(f"Beginning ping of all clients. This may take a few seconds...")
+    print(f"Beginning ping of all clients. This may take a few (up to {TIMEOUT_TIME}) seconds...")
 
     #with clients_lock:
         #clients_snapshot = dict(clients_info) # make a copy to safely iterate. TODO this is so wrong
@@ -260,28 +265,28 @@ def ping_all(noisy=False):
     for thread in threads:
         thread.join()  # Wait for all pings to finish
 
+# Call from source with client lock
 def ping_client(client, noisy=False):
     cs = client["cs"]
     ip = client["ipaddr"]
     try:
-        cs.settimeout(5)
+        cs.settimeout(TIMEOUT_TIME) # leftover from previous work
         cs.send(b"PING")
-        response = cs.recv(1024)
+        response = cs.recv(BUFFER_SIZE)
         if not response: # empty
             raise ValueError("Received empty response")
         client["callback"] = get_time()
-        cs.settimeout(TIMEOUT_TIME)
+        cs.settimeout(TIMEOUT_TIME) # leftover from previous work
         if noisy:
             print(f"{style.GREEN}Client {ip} is alive{style.RESET}")
     except Exception as e:
         if noisy:
             print(f"{style.RED}Client {ip} is dead: {e}{style.RESET}")
-        with clients_lock:
-            try:
-                client["cs"].close()
-            finally:
-                client["alive"] = False
-                client["cs"] = None
+        try:
+            client["cs"].close()
+        finally:
+            client["alive"] = False
+            client["cs"] = None
 
 '''
 Listens for incoming client connections and attempts to process them.
@@ -299,7 +304,7 @@ def handle_connections(server_sock):
         except TimeoutError:
             continue
         print(f"Got new connection from {addr}. ",end="") # will be added onto later in the thread
-        # get this into a thread ASAP so that we can handle
+        # get this into a thread ASAP so that we can handle new connections without hitting a clients_lock
         thread = threading.Thread(target = handle_client2, args=(client_sock,addr))
         thread.start()
 

