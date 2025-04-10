@@ -76,7 +76,7 @@
 - name: Deploy pyc2 server
   hosts: siphoner-server
   roles:
-    - pyc2-server
+    - py_c2-server
   tags:
     - all
     - pyc2
@@ -85,7 +85,7 @@
 - name: Deploy pyc2 clients
   hosts: all
   roles:
-    - pyc2-client
+    - py_c2-client
   tags:
     - all
     - pyc2
