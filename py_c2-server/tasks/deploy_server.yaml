@@ -1,19 +1,19 @@
 ---
-- name: Allow incoming traffic on port via iptables
-  ansible.builtin.iptables:
-    chain: INPUT
-    protocol: tcp
-    destination_port: "{{ pyc2_port }}"
-    jump: ACCEPT
-    state: present
+#- name: Allow incoming traffic on port via iptables
+#  ansible.builtin.iptables:
+#    chain: INPUT
+#    protocol: tcp
+#    destination_port: "{{ pyc2_port }}"
+#    jump: ACCEPT
+#    state: present
 
-- name: Allow outbound traffic on port via iptables
-  ansible.builtin.iptables:
-    chain: OUTPUT
-    protocol: tcp
-    source_port: "{{ pyc2_port }}"
-    jump: ACCEPT
-    state: present
+#- name: Allow outbound traffic on port via iptables
+#  ansible.builtin.iptables:
+#    chain: OUTPUT
+#    protocol: tcp
+#    source_port: "{{ pyc2_port }}"
+#    jump: ACCEPT
+#    state: present
 
 - name: Ensure destination directory exists
   ansible.builtin.file:
@@ -38,7 +38,7 @@
 
 - name: Update pwnhost value
   replace:
-    path: "{{ pyc2_client_location_unix }}"
+    path: "{{ pyc2_server_location }}"
     regexp: '^PWNHOST=.*'
     replace: 'PWNHOST="{{ pwnhost }}"'
 
