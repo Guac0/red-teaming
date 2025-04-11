@@ -145,15 +145,17 @@ def open_firewall():
 
 def encrypt_string(msg):
     global key
-    cipher = Fernet(key)
-    encrypted = cipher.encrypt(msg.encode())
-    return base64.b64encode(encrypted).decode()
+    #cipher = Fernet(key)
+    #encrypted = cipher.encrypt(msg.encode())
+    #return base64.b64encode(encrypted).decode()
+    return msg
 
 def decrypt_string(msg):
     global key
-    cipher = Fernet(key)
-    decrypted = base64.b64decode(msg)
-    return cipher.decrypt(decrypted).decode()
+    #cipher = Fernet(key)
+    #decrypted = base64.b64decode(msg)
+    #return cipher.decrypt(decrypted).decode()
+    return msg
 
 def main():
     global key

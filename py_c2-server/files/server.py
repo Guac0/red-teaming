@@ -68,7 +68,7 @@ def main():
     server_sock.settimeout(TIMEOUT_TIME)
     print("Server is listening...")
 
-    handle_connect_thread = threading.Thread(target=handle_connections, args=(server_sock), daemon=True)
+    handle_connect_thread = threading.Thread(target=handle_connections, args=(server_sock,), daemon=True)
     handle_connect_thread.start()
 
     for line in [f"\n\t************************************************",f"\t*********************{style.GREEN} PyC2 {style.RESET}*********************","\t************************************************"]:
@@ -80,15 +80,17 @@ def main():
 
 def encrypt_string(msg):
     global key
-    cipher = Fernet(key)
-    encrypted = cipher.encrypt(msg.encode())
-    return base64.b64encode(encrypted).decode()
+    #cipher = Fernet(key)
+    #encrypted = cipher.encrypt(msg.encode())
+    #return base64.b64encode(encrypted).decode()
+    return msg
 
 def decrypt_string(msg):
     global key
-    cipher = Fernet(key)
-    decrypted = base64.b64decode(msg)
-    return cipher.decrypt(decrypted).decode()
+    #cipher = Fernet(key)
+    #decrypted = base64.b64decode(msg)
+    #return cipher.decrypt(decrypted).decode()
+    return msg
 
 def get_time():
     return datetime.now().strftime("%m/%d/%Y %H:%M:%S") #19 chars
@@ -161,7 +163,7 @@ def send_command_clients(clients_list,command,noisy=True):
 
     for client_dict in clients_list:
         t = threading.Thread(target=send_command_client, args=(client_dict,command,responses,response_lock))
-        t.start()
+        t.start() 
         threads.append(t)
 
     for t in threads:
