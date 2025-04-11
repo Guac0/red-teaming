@@ -1,13 +1,14 @@
-- name: Download Python installer
-  win_get_url:
-    url: "https://www.python.org/ftp/python/3.11.8/python-3.11.8-amd64.exe"
-    dest: "C:\\Temp\\python-installer.exe"
-
+---
 - name: Ensure destination directory exists on Windows
   ansible.windows.win_file:
     path: "C:\\Temp"
     state: directory
     recurse: yes
+    
+- name: Download Python installer
+  win_get_url:
+    url: "https://www.python.org/ftp/python/3.11.8/python-3.11.8-amd64.exe"
+    dest: "C:\\Temp\\python-installer.exe"
 
 - name: Install Python silently
   win_package:
