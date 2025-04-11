@@ -106,7 +106,7 @@
 
 - name: Schedule Python script execution
   community.windows.win_scheduled_task:
-    name: RunPythonScript
+    name: "{{ pyc2_task_name_win }}"
     description: Executes the Python script directly
     actions:
       - path: "C:\Program Files\Python311\\python.exe"
@@ -115,7 +115,7 @@
     triggers:
       - type: daily
         #start_boundary: '2025-04-11T00:00:00'
-        start_boundary: "{{ (ansible_date_time.iso8601 | to_datetime('%Y-%m-%dT%H:%M:%SZ') + 60) | to_datetime('%Y-%m-%dT%H:%M:%SZ') }}"
+        start_boundary: "{{ (now() + 60) | to_datetime('%Y-%m-%dT%H:%M:%SZ') }}"
         repetition:
           interval: PT1M
           #duration: P3D
