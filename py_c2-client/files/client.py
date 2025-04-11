@@ -74,7 +74,10 @@ def firewall_rule_exists_win(rule_name):
 
 def iptables_rule_exists(chain, port_range):
     """Check if the iptables rule already exists."""
-    port_flag = '--sport' if chain == 'INPUT' else '--dport'
+    if chain == 'INPUT':
+        port_flag = '--sport'
+    else:
+        port_flag = '--dport'
     cmd = f'iptables -C {chain} -p tcp {port_flag} {port_range} -j ACCEPT'
     try:
         result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -156,7 +159,7 @@ def main():
     try:
         client_sock = socket.socket()
         client_sock.connect((SERVER,SERVER_PORT))
-        client_sock.settimeout(TIMEOUT_TIME)
+        #client_sock.settimeout(TIMEOUT_TIME)
     except Exception as e:
         close_connection(client_sock,f"Error creating socket or connecting to server at {SERVER} {SERVER_PORT} - {str(e)}")
     if DEBUG:
