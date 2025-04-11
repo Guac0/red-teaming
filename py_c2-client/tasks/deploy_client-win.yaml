@@ -107,9 +107,9 @@
 - name: Schedule Python script execution
   community.windows.win_scheduled_task:
     name: "{{ pyc2_task_name_win }}"
-    description: Executes the Python script directly
+    description: "{{ pyc2_task_desc_win }}"
     actions:
-      - path: "C:\Program Files\Python311\\python.exe"
+      - path: "C:\\Program Files\\Python311\\python.exe"
         arguments: "{{ pyc2_client_location_win }}"
         working_directory: C:\
     triggers:

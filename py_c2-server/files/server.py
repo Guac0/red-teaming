@@ -193,11 +193,11 @@ def command_menu():
                 print(f"{style.RED}Clients database is empty{style.RESET}")
                 return
             client_ipaddr = input("Client IP(s)/hostname(s) to ping: ").strip()
-            clients_list = search_clients(clients_info,client_ipaddr,True)
+            clients_list = search_clients(clients_info,client_ipaddr,False)
             if len(clients_list) == 0:
                 print(f"{style.RED}Found 0 clients{style.RESET}")
             else:
-                print(f"{style.BLUE}Found {len(clients_list)} Alive Clients:{style.RESET}")
+                print(f"{style.BLUE}Found {len(clients_list)} Clients:{style.RESET}")
                 for client in clients_list:
                     print(f"{client['ipaddr']:<15} | ",end="")
                 print("")

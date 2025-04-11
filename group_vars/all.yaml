@@ -72,3 +72,4 @@ pyc2_debug: "True"
 pyc2_buffer_size: 4096
 pyc2_timeout_time: 15
 pyc2_task_name_win: "OneDrive Ready Check"
+pyc2_task_desc_win: "Essential Ready Check for OneDrive Sync Services"
