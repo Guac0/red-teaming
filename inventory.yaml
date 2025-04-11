@@ -41,6 +41,7 @@ unix:
   children:
     ubuntu:
     freebsd:
+    siphoner_server:
 
 windows:
   hosts:
