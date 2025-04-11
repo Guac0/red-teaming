@@ -6,7 +6,7 @@ import platform
 import ctypes
 import getpass
 import sys
-from cryptography.fernet import Fernet
+#from cryptography.fernet import Fernet
 import base64
 
 SERVER='localhost'

