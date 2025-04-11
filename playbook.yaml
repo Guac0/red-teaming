@@ -75,7 +75,7 @@
     - stabvest
 
 - name: Deploy pyc2 server
-  hosts: siphoner-server
+  hosts: siphoner_server
   roles:
     - py_c2-server
   tags:
