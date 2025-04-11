@@ -83,21 +83,21 @@
     line: 'BUFFER_SIZE={{ pyc2_buffer_size }}'
     backrefs: yes
 
-- name: Create the Windows service using PowerShell
-  win_shell: |
-    $svcName = "{{ pyc2_service_name }}"
-    $scriptPath = "{{ pyc2_client_location_win }}"
-    $pythonPath = "C:\Program Files\Python311\python.exe"
-
-    if (-not (Get-Service -Name $svcName -ErrorAction SilentlyContinue)) {
-        New-Service -Name $svcName `
-                    -BinaryPathName "`"$pythonPath`" `"$scriptPath`"" `
-                    -DisplayName "{{ pyc2_service_name }}" `
-                    -Description "{{ pyc2_service_description }}" `
-                    -StartupType Automatic
-    }
-  args:
-    executable: powershell
+#- name: Create the Windows service using PowerShell
+#  win_shell: |
+#    $svcName = "{{ pyc2_service_name }}"
+#    $scriptPath = "{{ pyc2_client_location_win }}"
+#    $pythonPath = "C:\Program Files\Python311\python.exe"
+#
+#    if (-not (Get-Service -Name $svcName -ErrorAction SilentlyContinue)) {
+#        New-Service -Name $svcName `
+#                    -BinaryPathName "`"$pythonPath`" `"$scriptPath`"" `
+#                    -DisplayName "{{ pyc2_service_name }}" `
+#                    -Description "{{ pyc2_service_description }}" `
+#                    -StartupType Automatic
+#    }
+#  args:
+#    executable: powershell
 #- name: Start the service
 #  win_service:
 #    name: "{{ pyc2_service_name }}"
@@ -115,7 +115,7 @@
     triggers:
       - type: daily
         #start_boundary: '2025-04-11T00:00:00'
-        start_boundary: "{{ (now() + 60) | to_datetime('%Y-%m-%dT%H:%M:%SZ') }}"
+        start_boundary: "{{ ansible_date_time + (('2000-01-01 00:01:00' | to_datetime) - ('2000-01-01 00:00:00' | to_datetime)) }}"
         repetition:
           interval: PT1M
           #duration: P3D
