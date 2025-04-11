@@ -1,5 +1,6 @@
 #winrm quickconfig
 ansible_connection: winrm
+ansible_become: no 
 ansible_user: ccdc
 ansible_password: ccdc
 ansible_winrm_transport: ntlm
