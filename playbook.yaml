@@ -2,6 +2,7 @@
   hosts: all
   gather_facts: no
   tasks:
+    # Needs python on windows
     - name: Ping my hosts
       ansible.builtin.ping:
 
@@ -82,11 +83,22 @@
     - pyc2
     - pyc2-server
 
-- name: Deploy pyc2 clients
-  hosts: all
+- name: Deploy pyc2 clients windows
+  hosts: windows
   roles:
     - py_c2-client
   tags:
     - all
     - pyc2
     - pyc2-clients
+    - pyc2-clients-windows
+
+- name: Deploy pyc2 clients unix
+  hosts: unix
+  roles:
+    - py_c2-client
+  tags:
+    - all
+    - pyc2
+    - pyc2-clients
+    - pyc2-clients-unix

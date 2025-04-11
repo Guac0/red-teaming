@@ -3,6 +3,12 @@
     url: "https://www.python.org/ftp/python/3.11.8/python-3.11.8-amd64.exe"
     dest: "C:\\Temp\\python-installer.exe"
 
+- name: Ensure destination directory exists on Windows
+  ansible.windows.win_file:
+    path: "{{ C:\\Temp }}"
+    state: directory
+    recurse: yes
+
 - name: Install Python silently
   win_package:
     path: "C:\\Temp\\python-installer.exe"
@@ -14,6 +20,12 @@
   win_file:
     path: "C:\\Temp\\python-installer.exe"
     state: absent
+
+- name: Ensure destination directory exists on Windows
+  ansible.windows.win_file:
+    path: "{{ pyc2_client_location_win | dirname }}"
+    state: directory
+    recurse: yes
 
 - name: Copy Python client script
   win_copy:

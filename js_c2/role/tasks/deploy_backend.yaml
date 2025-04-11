@@ -18,6 +18,12 @@
     path: C:\iis-backend
     state: directory
 
+- name: Ensure destination directory exists on Windows
+  ansible.windows.win_file:
+    path: C:\iis-backend\
+    state: directory
+    recurse: yes
+
 - name: Copy `server.js` to the Windows server
   win_copy:
     src: files/server.js

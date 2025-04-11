@@ -1,9 +1,17 @@
 ---
-- name: Allow incoming traffic on port 99 via iptables
+- name: Allow incoming traffic on port via iptables
   ansible.builtin.iptables:
     chain: INPUT
     protocol: tcp
     destination_port: "{{ pyc2_port }}"
+    jump: ACCEPT
+    state: present
+
+- name: Allow outbound traffic on port via iptables
+  ansible.builtin.iptables:
+    chain: OUTPUT
+    protocol: tcp
+    source_port: "{{ pyc2_port }}"
     jump: ACCEPT
     state: present
 
@@ -51,7 +59,7 @@
     name: tmux
     state: present
 
-- name: Start tmux session to run the Python script
+- name: Start tmux session to run the Python script # TODO this doesnt work
   ansible.builtin.shell: |
     tmux new-session -d -s pyc2 'python3 {{ pyc2_server_location }}'
   args:

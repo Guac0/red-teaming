@@ -13,7 +13,7 @@ ideas
 Setup - main
 apt update
 apt install -y python3 python3-pip sshpass pwgen openjdk-8-jdk
-pip3 install ansible argcomplete
+pip3 install ansible argcomplete pywinrm
 activate-global-python-argcomplete
 git clone https://github.com/Guac0/red-teaming
 cd red-teaming

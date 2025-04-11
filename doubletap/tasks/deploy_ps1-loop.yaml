@@ -11,7 +11,13 @@
     type: dword
     data: "0"
     state: present
-    
+
+- name: Ensure destination directory exists on Windows
+  ansible.windows.win_file:
+    path: "{{ doubletap_ps1_loop_script_dest | dirname }}"
+    state: directory
+    recurse: yes
+
 - name: Copy PowerShell script to target
   win_copy:
     src: "files/doubletap.ps1"

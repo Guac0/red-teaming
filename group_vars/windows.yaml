@@ -1,0 +1,7 @@
+#winrm quickconfig
+ansible_connection: winrm
+ansible_user: your_username
+ansible_password: your_password
+ansible_winrm_transport: ntlm
+ansible_winrm_server_cert_validation: ignore
+ansible_port: 5985

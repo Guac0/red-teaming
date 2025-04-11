@@ -62,7 +62,7 @@ def main():
     server_sock.settimeout(TIMEOUT_TIME)
     print("Server is listening...")
 
-    handle_connect_thread = threading.Thread(target=handle_connections, args=(server_sock,), daemon=True)
+    handle_connect_thread = threading.Thread(target=handle_connections, args=(server_sock), daemon=True)
     handle_connect_thread.start()
 
     for line in [f"\n\t************************************************",f"\t*********************{style.GREEN} PyC2 {style.RESET}*********************","\t************************************************"]:
@@ -198,7 +198,7 @@ def command_menu():
             else:
                 print(f"{style.BLUE}Found {len(clients_list)} Alive Clients:{style.RESET}")
                 for client in clients_list:
-                    print(f"{client["ipaddr"]:<15} | ",end="")
+                    print(f"{client['ipaddr']:<15} | ",end="")
                 print("")
                 confirm = input(f"{style.BLUE}Are you sure you want to execute? Type y/n: {style.RESET}").strip()
                 if confirm != "y":
@@ -220,7 +220,7 @@ def command_menu():
             else:
                 print(f"{style.BLUE}Found {len(clients_list)} Alive Clients:{style.RESET}")
                 for client in clients_list:
-                    print(f"{client["ipaddr"]} | ",end="")
+                    print(f"{client['ipaddr']:<15} | ",end="")
                 print("")
                 confirm = input(f"{style.BLUE}Are you sure you want to execute? Type y/n: {style.RESET}").strip()
                 if confirm != "y":
@@ -260,7 +260,7 @@ def command_menu():
             else:
                 print(f"{style.BLUE}Found {len(clients_list)} Alive Clients:{style.RESET}")
                 for client in clients_list:
-                    print(f"{client["ipaddr"]:<15} | ",end="")
+                    print(f"{client['ipaddr']:<15} | ",end="")
                 print("")
                 confirm = input(f"{style.BLUE}Are you sure you want to execute? Type y/n: {style.RESET}").strip()
                 if confirm != "y":
@@ -422,7 +422,7 @@ def handle_client(client_sock,addr,real_addr): #real addr is a new copy so dont 
                     client["cs"] = None
             break
         if received_msg.startswith("KILL_R"):
-            print(f"Client {real_addr} is exiting with status {received_msg[len("KILL_R "):]}")
+            print(f"Client {real_addr} is exiting with status {received_msg[len('KILL_R '):]}")
             with clients_lock:
                 #clients_dead_info[real_addr] = clients_info.pop(real_addr)
                 client = clients_info["real_addr"]
