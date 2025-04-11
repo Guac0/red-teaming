@@ -5,7 +5,7 @@
 
 - name: Ensure destination directory exists on Windows
   ansible.windows.win_file:
-    path: "{{ C:\\Temp }}"
+    path: "C:\\Temp"
     state: directory
     recurse: yes
 
