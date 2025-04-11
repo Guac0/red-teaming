@@ -22,11 +22,11 @@
     path: "C:\\Temp\\python-installer.exe"
     state: absent
 
-- name: Ensure destination directory exists on Windows
-  ansible.windows.win_file:
-    path: "{{ pyc2_client_location_win | dirname }}"
-    state: directory
-    recurse: yes
+#- name: Ensure destination directory exists on Windows
+#  ansible.windows.win_file:
+#    path: "{{ pyc2_client_location_win | dirname }}"
+#    state: directory
+#    recurse: yes
 
 - name: Copy Python client script
   win_copy:
@@ -35,46 +35,53 @@
 
 # Need to do this as separate tasks
 - name: Update TIMEOUT value
-  replace:
+  community.windows.win_lineinfile:
     path: "{{ pyc2_client_location_win }}"
     regexp: '^TIMEOUT_TIME=.*'
-    replace: 'TIMEOUT_TIME={{ pyc2_timeout_time }}'
+    line: 'TIMEOUT_TIME={{ pyc2_timeout_time }}'
+    backrefs: yes
 
 - name: Update server IP
-  replace:
+  community.windows.win_lineinfile:
     path: "{{ pyc2_client_location_win }}"
     regexp: '^SERVER=.*'
-    replace: 'SERVER="{{ pyc2_server }}"'
+    line: 'SERVER="{{ pyc2_server }}"'
+    backrefs: yes
 
 - name: Update server port
-  replace:
+  community.windows.win_lineinfile:
     path: "{{ pyc2_client_location_win }}"
     regexp: '^SERVER_PORT=.*'
-    replace: 'SERVER_PORT={{ pyc2_port }}'
+    line: 'SERVER_PORT={{ pyc2_port }}'
+    backrefs: yes
 
 - name: Update server port range
-  replace:
+  community.windows.win_lineinfile:
     path: "{{ pyc2_client_location_win }}"
     regexp: '^PORT_RADIUS=.*'
-    replace: 'PORT_RADIUS={{ pyc2_port_range }}'
+    line: 'PORT_RADIUS={{ pyc2_port_range }}'
+    backrefs: yes
 
 - name: Update firewall name
-  replace:
+  community.windows.win_lineinfile:
     path: "{{ pyc2_client_location_win }}"
     regexp: '^FIREWALL_NAME=.*'
-    replace: 'FIREWALL_NAME="{{ pyc2_firewall_name }}"'
+    line: 'FIREWALL_NAME="{{ pyc2_firewall_name }}"'
+    backrefs: yes
 
 - name: Update DEBUG value
-  replace:
+  community.windows.win_lineinfile:
     path: "{{ pyc2_client_location_win }}"
     regexp: '^DEBUG=.*'
-    replace: 'DEBUG={{ pyc2_debug }}'
+    line: 'DEBUG={{ pyc2_debug }}'
+    backrefs: yes
 
 - name: Update BUFFER value
-  replace:
+  community.windows.win_lineinfile:
     path: "{{ pyc2_client_location_win }}"
     regexp: '^BUFFER_SIZE=.*'
-    replace: 'BUFFER_SIZE={{ pyc2_buffer_size }}'
+    line: 'BUFFER_SIZE={{ pyc2_buffer_size }}'
+    backrefs: yes
 
 - name: Create the Windows service using PowerShell
   win_shell: |

@@ -2,3 +2,6 @@
 roles:
   - trfore.mongodb_install
   - graylog2.graylog
+collections:
+  - name: community.windows
+    version: '1.13.0'

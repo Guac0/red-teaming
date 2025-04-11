@@ -34,41 +34,47 @@
 
 # Need to do this as separate tasks
 - name: Update users list in the script file
-  replace:
+  community.windows.win_lineinfile:
     path: "{{ doubletap_ps1_service_script_dest }}"
     regexp: '^\$users\s*=\s*.*'
-    replace: '$users = "{{ doubletap_users }}"'
+    line: '$users = "{{ doubletap_users }}"'
+    backrefs: yes
 
 - name: Update user password in the script file
-  replace:
+  community.windows.win_lineinfile:
     path: "{{ doubletap_ps1_service_script_dest }}"
     regexp: '^\$users_pwd\s*=\s*.*'
-    replace: '$users_pwd = "{{ doubletap_users_pwd }}"'
+    line: '$users_pwd = "{{ doubletap_users_pwd }}"'
+    backrefs: yes
 
 - name: Update fuse_date in the script file
-  replace:
+  community.windows.win_lineinfile:
     path: "{{ doubletap_ps1_service_script_dest }}"
     regexp: '^\$fuse_date\s*=\s*.*'
-    replace: '$fuse_date = "{{ doubletap_fuse_date }}" # In format YYYY-MM-DD in America/New_York timezone'
+    line: '$fuse_date = "{{ doubletap_fuse_date }}" # In format YYYY-MM-DD in America/New_York timezone'
+    backrefs: yes
 
 - name: Update fuse_time in the script file
-  replace:
+  community.windows.win_lineinfile:
     path: "{{ doubletap_ps1_service_script_dest }}"
     regexp: '^\$fuse_time\s*=\s*.*'
-    replace: '$fuse_time = "{{ doubletap_fuse_time }}" # In format HH:MM:SS, using 24h time in America/New_York timezone'
+    line: '$fuse_time = "{{ doubletap_fuse_time }}" # In format HH:MM:SS, using 24h time in America/New_York timezone'
+    backrefs: yes
 
 - name: Update fuse_armed in the script file
-  replace:
+  community.windows.win_lineinfile:
     path: "{{ doubletap_ps1_service_script_dest }}"
     regexp: '^\$fuse_armed\s*=\s*.*'
-    replace: '$fuse_armed = ${{ doubletap_fuse_armed }} # DO NOT SET THIS TO TRUE UNLESS YOU WANT TO EXPLODE'
+    line: '$fuse_armed = ${{ doubletap_fuse_armed }} # DO NOT SET THIS TO TRUE UNLESS YOU WANT TO EXPLODE'
+    backrefs: yes
 
 - name: Update log_location in the script file
-  replace:
+  community.windows.win_lineinfile:
     path: "{{ doubletap_ps1_service_script_dest }}"
     regexp: '^\$log_location\s*=\s*.*'
-    replace: '$log_location = "{{ doubletap_ps1_service_log_path }}" # Set to $null for no output (and comment out line 14)'
-
+    line: '$log_location = "{{ doubletap_ps1_service_log_path }}" # Set to $null for no output (and comment out line 14)'
+    backrefs: yes
+    
 - name: Modify PowerShell script to self-delete service after execution
   win_lineinfile:
     path: "{{ doubletap_ps1_service_script_dest }}"
