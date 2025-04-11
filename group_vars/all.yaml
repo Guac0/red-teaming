@@ -64,8 +64,8 @@ doubletap_sh_service_log_path: "/bin/doubletap3_log"
 # Py C2
 ###################
 pyc2_server_location: "/pyc2/pyc2-server.py"
-pyc2_port: 9999
-pyc2_port_range: 200
+pyc2_port: 805
+pyc2_port_range: 13
 pyc2_server: "{{ hostvars['siphoner_server']['ansible_host'] }}"
 pyc2_service_name: "pyc2"
 pyc2_service_description: "pyc2"

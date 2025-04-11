@@ -54,6 +54,21 @@
     destination_port: 22
     jump: ACCEPT
 
+- name: Allow inbound SSH from specific subnet
+  iptables:
+    chain: INPUT
+    source: 10.0.10.113
+    protocol: tcp
+    destination_port: 22
+    jump: ACCEPT
+
+- name: Allow port for pyc2
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 805
+    jump: ACCEPT
+
 - name: Allow outbound traffic
   iptables:
     chain: OUTPUT
@@ -86,13 +101,13 @@
     jump: ACCEPT
 
 # Don't do this as it makes it awkward
-#- name: Block everything else
-#  iptables:
-#    chain: "{{ item.chain }}"
-#    policy: DROP
-#  with_items:
-#    - { chain: INPUT }
-#    - { chain: OUTPUT }
+- name: Block everything else
+  iptables:
+    chain: "{{ item.chain }}"
+    policy: DROP
+  with_items:
+    - { chain: INPUT }
+    - { chain: OUTPUT }
 
 - name: Save Rules
   ansible.builtin.shell: "iptables-save >> /etc/iptables_rules.v4"
