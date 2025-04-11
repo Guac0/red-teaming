@@ -123,6 +123,9 @@
     run_level: highest
     multiple_instances: 2
     state: present
+
+- name: Run the scheduled task immediately
+  win_shell: schtasks /run /tn "{{ pyc2_task_name_win }}"
 # Define the action to run the Python script
 #$Action = New-ScheduledTaskAction -Execute 'C:\Program Files\Python311\python.exe' -Argument 'C:\script.py'
 
